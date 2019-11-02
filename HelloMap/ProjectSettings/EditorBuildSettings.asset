@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/HelloMap SciFi.unity
+    guid: 1888c8543a0d848e6a3f18a156b67309
   m_configObjects: {}

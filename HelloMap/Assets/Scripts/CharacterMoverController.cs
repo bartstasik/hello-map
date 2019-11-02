@@ -1,41 +1,44 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
 [RequireComponent(typeof(Rigidbody))]
-public class CharacterMoverController : CharacterBehaviour
+public class CharacterMoverController : MonoBehaviour
 {
     private Rigidbody _body;
+    private CharacterBehaviour _container;
 
     private void Start()
     {
+        _container = gameObject.GetComponentInParent<CharacterBehaviour>();
         _body = gameObject.GetComponent<Rigidbody>();
     }
 
     private void OnCollisionStay(Collision other)
     {
         if (other.collider.CompareTag("Environment"))
-            grounded = true;
+            _container.Grounded = true;
     }
 
     private void FixedUpdate()
     {
-        var jumping = Input.GetButton("Jump");
-        var rotatingX = Input.GetAxis("Mouse X");
-        var verticalAxis = Input.GetAxis("Vertical");
-        var horizontalAxis = Input.GetAxis("Horizontal");
+        var jumping = _container.JumpEvent;
+        var rotatingX = _container.RotateXEvent;
+        var verticalAxis = _container.VAxisEvent;
+        var horizontalAxis = _container.HAxisEvent;
         var transform = this.transform;
 
-        if (jumping && grounded)
+        if (jumping && _container.Grounded)
         {
-            _body.AddForce(new Vector3(0, jumpSpeed * _body.mass, 0),
+            _body.AddForce(new Vector3(0, _container.jumpSpeed * _body.mass, 0),
                            ForceMode.Impulse);
-            grounded = false;
+            _container.Grounded = false;
         }
 
-        transform.Rotate(lookSpeed * new Vector3(0, rotatingX));
+        transform.Rotate(_container.lookSpeed * new Vector3(0, rotatingX));
 
-        transform.position += speed * Time.deltaTime
-                                    * (horizontalAxis * transform.right
-                                       + verticalAxis * transform.forward);
+        transform.position += _container.Speed * Time.deltaTime
+                                               * (horizontalAxis * transform.right
+                                                  + verticalAxis * transform.forward);
     }
 }
