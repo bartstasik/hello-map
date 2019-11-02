@@ -22,6 +22,8 @@ public class CharacterBehaviour : MonoBehaviour
     [NonSerialized] public bool SprintEvent, JumpEvent, Grounded;
     [NonSerialized] public float VAxisEvent, HAxisEvent, HAxisRawEvent, RotateXEvent, Speed;
 
+    [SerializeField] private GameObject mainPlayer;
+
     private short _checkpoint = 0;
 
     private Transform _transform;
@@ -51,22 +53,16 @@ public class CharacterBehaviour : MonoBehaviour
     private void MoveByCheckpoint()
     {
         if (_checkpoint >= checkpoints.Length)
-        {
             return;
-        }
-
         var (distance, normalisedAngle) = GetCheckpoint();
-        
         SprintEvent = false;
         JumpEvent = false;
-        RotateXEvent = normalisedAngle * rotationSpeed;;
+        RotateXEvent = normalisedAngle * rotationSpeed;
         VAxisEvent = distance < 1.3
                          ? IncrementCheckpoint()
                          : 1 - Mathf.Abs(normalisedAngle); //TODO: simplify // 2 * normalisedAngle
         HAxisEvent = 0;
         HAxisRawEvent = 0;
-        
-        print(1 - Mathf.Abs(normalisedAngle));
     }
 
     private void MoveByPlayerInput()
@@ -81,24 +77,27 @@ public class CharacterBehaviour : MonoBehaviour
 
     private (double, float) GetCheckpoint()
     {
-        var source = _transform.position;
         var target = checkpoints[_checkpoint].transform.position;
         var currentOffset = _transform.InverseTransformPoint(target);
         var angle = Quaternion.LookRotation(currentOffset).eulerAngles.y;
-        var vector = new Vector3(source.x - target.x,
-                                 source.y - target.y,
-                                 source.z - target.z);
-        var distance = Math.Sqrt(vector.x * vector.x +
-                                 vector.y * vector.y +
-                                 vector.z * vector.z);
-        var normalisedAngle = Mathf.Sin(angle * Mathf.Deg2Rad);
-        return (distance, normalisedAngle);
+        return (DistanceBetween(_transform.position, target),
+                Mathf.Sin(angle * Mathf.Deg2Rad));
     }
-    
+
     private short IncrementCheckpoint()
     {
-        Destroy(checkpoints[_checkpoint]);
+        Destroy(checkpoints[_checkpoint].gameObject);
         _checkpoint++;
         return 0;
+    }
+
+    private static double DistanceBetween(Vector3 v1, Vector3 v2)
+    {
+        var vector = new Vector3(v1.x - v2.x,
+                                 v1.y - v2.y,
+                                 v1.z - v2.z);
+        return Math.Sqrt(vector.x * vector.x +
+                         vector.y * vector.y +
+                         vector.z * vector.z);
     }
 }

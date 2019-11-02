@@ -196,6 +196,8 @@
           <e p="CharacterBehaviour.cs" t="Include" />
           <e p="CharacterDummyController.cs" t="Include" />
           <e p="CharacterMoverController.cs" t="Include" />
+          <e p="CheckpointController.cs" t="Include" />
+          <e p="DoorController.cs" t="Include" />
           <e p="PlayerMovementController.cs" t="Include" />
           <e p="RayController.cs" t="Include" />
         </e>
