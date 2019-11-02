@@ -55,18 +55,7 @@ public class CharacterBehaviour : MonoBehaviour
             return;
         }
 
-        var source = _transform.position;
-        var target = checkpoints[_checkpoint].transform.position;
-        var currentOffset = _transform.InverseTransformPoint(target);
-        var angle = Quaternion.LookRotation(currentOffset).eulerAngles.y;
-        var vector = new Vector3(source.x - target.x,
-                                 source.y - target.y,
-                                 source.z - target.z);
-        var distance = Math.Sqrt(vector.x * vector.x +
-                                 vector.y * vector.y +
-                                 vector.z * vector.z);
-
-        var normalisedAngle = Mathf.Sin(angle * Mathf.Deg2Rad);
+        var (distance, normalisedAngle) = GetCheckpoint();
         
         SprintEvent = false;
         JumpEvent = false;
@@ -90,6 +79,22 @@ public class CharacterBehaviour : MonoBehaviour
         HAxisRawEvent = Input.GetAxisRaw("Horizontal");
     }
 
+    private (double, float) GetCheckpoint()
+    {
+        var source = _transform.position;
+        var target = checkpoints[_checkpoint].transform.position;
+        var currentOffset = _transform.InverseTransformPoint(target);
+        var angle = Quaternion.LookRotation(currentOffset).eulerAngles.y;
+        var vector = new Vector3(source.x - target.x,
+                                 source.y - target.y,
+                                 source.z - target.z);
+        var distance = Math.Sqrt(vector.x * vector.x +
+                                 vector.y * vector.y +
+                                 vector.z * vector.z);
+        var normalisedAngle = Mathf.Sin(angle * Mathf.Deg2Rad);
+        return (distance, normalisedAngle);
+    }
+    
     private short IncrementCheckpoint()
     {
         Destroy(checkpoints[_checkpoint]);
