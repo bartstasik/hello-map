@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CharacterBehaviour : MonoBehaviour
 {
@@ -10,9 +11,7 @@ public class CharacterBehaviour : MonoBehaviour
     }
 
     public Type playerType = Type.NonPlayerCharacter;
-
-    public GameObject[] checkpoints;
-
+    
     public float runSpeed = 5;
     public float sprintSpeed = 2;
     public float jumpSpeed = 3;
@@ -23,13 +22,20 @@ public class CharacterBehaviour : MonoBehaviour
     [NonSerialized] public float VAxisEvent, HAxisEvent, HAxisRawEvent, RotateXEvent, Speed;
 
     [SerializeField] private GameObject mainPlayer;
-
-    private short _checkpoint = 0;
+    [SerializeField] private GameObject NPC;
+    [SerializeField] private Text northwestText;
+    [SerializeField] private Text southwestText;
 
     private Transform _transform;
+    
+    private GameObject[] _allCheckpoints;
+
+    private GlobalCharacter _globalCharacter;
 
     private void Start()
     {
+        _globalCharacter = GetComponentInParent<GlobalCharacter>();
+        _allCheckpoints = _globalCharacter.checkpoints;
         _transform = GetComponentInChildren<CharacterMoverController>().transform;
     }
 
@@ -50,11 +56,62 @@ public class CharacterBehaviour : MonoBehaviour
         Speed = SprintEvent ? runSpeed * sprintSpeed : runSpeed;
     }
 
+    private void MoveByPlayerInput()
+    {
+        SprintEvent = Input.GetButton("Sprint");
+        JumpEvent = false; //Input.GetButton("Jump");
+        RotateXEvent = Input.GetAxis("Mouse X");
+        VAxisEvent = Input.GetAxis("Vertical");
+        HAxisEvent = Input.GetAxis("Horizontal");
+        HAxisRawEvent = Input.GetAxisRaw("Horizontal");
+        
+        if (_globalCharacter.playerCheckpoint >= _allCheckpoints.Length)
+            return;
+        
+        var (distance, normalisedAngle) = GetCheckpoint(_globalCharacter.playerCheckpoint);
+
+        print(_allCheckpoints[3]);
+        
+        if (distance < 1.3)
+        {
+            _globalCharacter.playerCheckpoint++;
+//            _globalCharacter.npcCheckpoint++;
+//            Destroy(_allCheckpoints[_checkpoint].gameObject);
+        }
+
+        southwestText.text = distance.ToString();
+        northwestText.text = DistanceAlongPath().ToString();
+    }
+
     private void MoveByCheckpoint()
     {
-        if (_checkpoint >= checkpoints.Length)
+        double distance;
+        float normalisedAngle;
+        bool playerBehind, aheadByCheckpoint;
+
+        if (_globalCharacter.npcCheckpoint == 0)
+        {
+            distance = 0;
+        }
+        else
+        {
+            distance = DistanceBetween(
+                _transform.position,
+                _allCheckpoints[_globalCharacter.npcCheckpoint - 1].transform.position);
+        }
+
+        playerBehind = _globalCharacter.npcCheckpoint > _globalCharacter.playerCheckpoint;
+        aheadByCheckpoint = playerBehind && distance > 10;
+
+        if (_globalCharacter.npcCheckpoint >= _allCheckpoints.Length || aheadByCheckpoint)
+        {
+            RotateXEvent = 0;
+            VAxisEvent = 0;
             return;
-        var (distance, normalisedAngle) = GetCheckpoint();
+        }
+        
+        (distance, normalisedAngle) = GetCheckpoint(_globalCharacter.npcCheckpoint);
+        
         SprintEvent = false;
         JumpEvent = false;
         RotateXEvent = normalisedAngle * rotationSpeed;
@@ -65,30 +122,40 @@ public class CharacterBehaviour : MonoBehaviour
         HAxisRawEvent = 0;
     }
 
-    private void MoveByPlayerInput()
+    private (double, float) GetCheckpoint(short checkpoint)
     {
-        SprintEvent = Input.GetButton("Sprint");
-        JumpEvent = false; //Input.GetButton("Jump");
-        RotateXEvent = Input.GetAxis("Mouse X");
-        VAxisEvent = Input.GetAxis("Vertical");
-        HAxisEvent = Input.GetAxis("Horizontal");
-        HAxisRawEvent = Input.GetAxisRaw("Horizontal");
-    }
-
-    private (double, float) GetCheckpoint()
-    {
-        var target = checkpoints[_checkpoint].transform.position;
+        var target = _allCheckpoints[checkpoint].transform.position;
         var currentOffset = _transform.InverseTransformPoint(target);
         var angle = Quaternion.LookRotation(currentOffset).eulerAngles.y;
         return (DistanceBetween(_transform.position, target),
-                Mathf.Sin(angle * Mathf.Deg2Rad));
+            Mathf.Sin(angle * Mathf.Deg2Rad));
     }
 
     private short IncrementCheckpoint()
     {
-        Destroy(checkpoints[_checkpoint].gameObject);
-        _checkpoint++;
+        //Destroy(checkpoints[_checkpoint].gameObject);
+        _globalCharacter.npcCheckpoint++;
         return 0;
+    }
+
+    private double DistanceAlongPath()
+    {
+        var a = 0d;
+        var max = _allCheckpoints.Length;
+        var player = _globalCharacter.playerCheckpoint;
+        var npc = _globalCharacter.npcCheckpoint;
+        
+        if (player == npc || player == max - 1 && npc == max)
+        {
+            a = DistanceBetween(_transform.position, NPC.transform.position);
+        } else if (player == npc - 1)
+        {
+            var target = _allCheckpoints[player].transform.position;
+            a = DistanceBetween(_transform.position, target) 
+                + DistanceBetween(target, NPC.transform.position);
+        }
+
+        return a;
     }
 
     private static double DistanceBetween(Vector3 v1, Vector3 v2)
