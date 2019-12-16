@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Environment
   - NPC
+  - Key
   layers:
   - Default
   - TransparentFX
@@ -18,11 +19,11 @@ TagManager:
   - PostProcessing
   - Environment
   - Checkpoint
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Key
+  - NPC
+  - Player
+  - Door
+  - CharacterDot
   - 
   - 
   - 

@@ -40,7 +40,7 @@ public class RayController : MonoBehaviour
                         Mathf.Infinity,
                         LayerMask.GetMask("Environment"));
         Debug.DrawRay(position, direction);
-        var colliderExists = ReferenceEquals(hit.collider, null);
-        return (colliderExists ? -1f : hit.distance).ToString(); //TODO: expensive null check
+        var colliderNotExists = ReferenceEquals(hit.collider, null);
+        return (colliderNotExists ? -1f : hit.distance).ToString(); //TODO: expensive null check
     }
 }
