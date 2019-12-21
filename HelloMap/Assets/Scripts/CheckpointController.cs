@@ -11,7 +11,7 @@ public class CheckpointController : MonoBehaviour
 
     [SerializeField] public Collider doorCollider;
 
-    [NonSerialized] public bool Met;
+    [NonSerialized] public bool met;
 
     private static readonly int Open = Animator.StringToHash("Open");
     private static readonly int Close = Animator.StringToHash("Close");
@@ -26,32 +26,26 @@ public class CheckpointController : MonoBehaviour
         _keyTextController = _keyPrompt.GetComponent<KeyTextController>();
 
         foreach (var backDoor in backDoors)
-        {
             backDoor.SetTrigger(Open);
-        }
 
         door.SetTrigger(Open);
     }
 
     private void Update()
     {
-        if (ReferenceEquals(key, null)) // TODO: nullcheck
+        if (!_keyTextController.LinkedObject.Equals(key.gameObject.GetInstanceID())
+            || !Input.GetKey(KeyCode.E))
             return;
-        if (_keyTextController.LinkedObject.Equals(key.gameObject.GetInstanceID())
-            && Input.GetKey(KeyCode.E))
-        {
-            Met = true;
-            door.SetTrigger(Open);
-            foreach (var backDoor in backDoors)
-            {
-                backDoor.SetTrigger(Close);
-            }
-        }
+        met = true;
+        door.SetTrigger(Open);
+        foreach (var backDoor in backDoors)
+            backDoor.SetTrigger(Close);
     }
 
     public void CloseDoor()
     {
         door.SetTrigger(Close);
+        met = true;
     }
 
 //    private IEnumerator OnTriggerEnter(Collider other)

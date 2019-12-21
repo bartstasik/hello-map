@@ -14,7 +14,7 @@ public class CharacterBehaviour : MonoBehaviour
     public Type playerType = Type.NonPlayerCharacter;
 
     public float runSpeed = 5;
-    public float sprintSpeed = 2;
+    public float sprintSpeed = 10;
     public float jumpSpeed = 3;
     public float lookSpeed = 5;
     public float rotationSpeed = 10;
@@ -67,7 +67,7 @@ public class CharacterBehaviour : MonoBehaviour
                 throw new ArgumentOutOfRangeException();
         }
 
-        Speed = SprintEvent ? runSpeed * sprintSpeed : runSpeed;
+        Speed = SprintEvent ? sprintSpeed : runSpeed;
     }
 
     private void MoveByPlayerInput()
@@ -78,27 +78,12 @@ public class CharacterBehaviour : MonoBehaviour
         VAxisEvent = Input.GetAxis("Vertical");
         HAxisEvent = Input.GetAxis("Horizontal");
         HAxisRawEvent = Input.GetAxisRaw("Horizontal");
-
-//        if (_checkpoint >= _allCheckpoints.Length)
-//            return;
-//        
-//        var target = _allCheckpoints[_checkpoint].transform.position;
-//        var distance = DistanceBetween(_transform.position, target);
-//
-//        if (distance < 6)
-//        {
-////            _allCheckpointTriggers[_checkpoint].AtDoor = true;
-//            _checkpoint++;
-////            Destroy(_allCheckpoints[_checkpoint].gameObject);
-//        }
-//
-//        southwestText.text = distance.ToString();
     }
 
     private void MoveByCheckpoint()
     {
-        double distance, distanceFromTarget, distanceFromDoor;
-        float normalisedAngle, xAdjustment, zAdjustment;
+        double distance;
+        float normalisedAngle;
 
         var awayFromPlayer = DistanceBetween(_transform.position, mainPlayer.transform.position) > 10;
 
@@ -113,6 +98,9 @@ public class CharacterBehaviour : MonoBehaviour
 
             var width = (checkpoint.doorCollider.bounds.size.y + doorSensorDistance);
 
+            float xAdjustment;
+            float zAdjustment;
+            
             if (checkpoint.door.transform.forward.z > 0.1)
             {
                 xAdjustment = checkpoint.doorCollider.bounds.size.y / 2;
@@ -144,18 +132,11 @@ public class CharacterBehaviour : MonoBehaviour
                 checkpointDoor.position.y,
                 checkpointDoorPosition.z + width * checkpointDoorForward.z + zAdjustment); //TODO: door parent cleanup
             
-            distanceFromDoor = DistanceBetween(
+            var distanceFromDoor = DistanceBetween(
                 new Vector2(_transform.position.x, _transform.position.z),
                 new Vector2(doorPosition.x, doorPosition.z));
 
-            distanceFromTarget = DistanceBetween(
-                new Vector2(doorPosition.x, doorPosition.z),
-                new Vector2(_allCheckpoints[_checkpoint - 1].transform.position.x,
-                            _allCheckpoints[_checkpoint - 1].transform.position.z));
-
-            print(distanceFromDoor + " : " + distanceFromTarget);
-
-            if (Mathf.RoundToInt((float) distanceFromDoor) <= 1)
+            if (!checkpoint.met && Mathf.RoundToInt((float) distanceFromDoor) <= 1)
             {
                 checkpoint.CloseDoor();
             }
