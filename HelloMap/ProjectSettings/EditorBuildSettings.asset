@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/HelloMap SciFi.unity
     guid: 1888c8543a0d848e6a3f18a156b67309
+  - enabled: 1
+    path: Assets/Scenes/LevelEnd.unity
+    guid: d99c999be024a44cf9320b72da615583
   m_configObjects: {}
