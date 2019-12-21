@@ -23,9 +23,7 @@ public class CharacterBehaviour : MonoBehaviour
     [NonSerialized] public float VAxisEvent, HAxisEvent, HAxisRawEvent, RotateXEvent, Speed;
 
     [SerializeField] private GameObject mainPlayer;
-    [SerializeField] private GameObject NPC;
-    [SerializeField] private Text northwestText;
-    [SerializeField] private Text southwestText;
+    [SerializeField] private Text doorClosedText, checkpointMetText, awayPlayerText;
 
     [SerializeField] private short doorSensorDistance = 2;
 
@@ -45,11 +43,6 @@ public class CharacterBehaviour : MonoBehaviour
         for (var i = 0; i < _allCheckpointTriggers.Length; i++)
         {
             _allCheckpointTriggers[i] = _allCheckpoints[i].GetComponent<CheckpointController>();
-        }
-
-        if (playerType.Equals(Type.NonPlayerCharacter))
-        {
-            gameObject.layer = LayerMask.NameToLayer("NPC");
         }
     }
 
@@ -85,9 +78,8 @@ public class CharacterBehaviour : MonoBehaviour
         double distance;
         float normalisedAngle;
 
-        var awayFromPlayer = DistanceBetween(_transform.position, mainPlayer.transform.position) > 10;
-
-        southwestText.text = awayFromPlayer.ToString();
+        var distanceFromPlayer = DistanceBetween(_transform.position, mainPlayer.transform.position);
+        var awayFromPlayer = distanceFromPlayer > 10;
 
         if (_checkpoint > 0)
         {
@@ -100,7 +92,7 @@ public class CharacterBehaviour : MonoBehaviour
 
             float xAdjustment;
             float zAdjustment;
-            
+
             if (checkpoint.door.transform.forward.z > 0.1)
             {
                 xAdjustment = checkpoint.doorCollider.bounds.size.y / 2;
@@ -126,21 +118,31 @@ public class CharacterBehaviour : MonoBehaviour
                 xAdjustment = 0;
                 zAdjustment = 0;
             }
-            
+
             var doorPosition = new Vector3(
                 checkpointDoorPosition.x + width * checkpointDoorForward.x + xAdjustment,
                 checkpointDoor.position.y,
                 checkpointDoorPosition.z + width * checkpointDoorForward.z + zAdjustment); //TODO: door parent cleanup
-            
+
             var distanceFromDoor = DistanceBetween(
                 new Vector2(_transform.position.x, _transform.position.z),
                 new Vector2(doorPosition.x, doorPosition.z));
 
-            if (!checkpoint.met && Mathf.RoundToInt((float) distanceFromDoor) <= 1)
+            if (!checkpoint.closed && Mathf.RoundToInt((float) distanceFromDoor) <= 1)
             {
                 checkpoint.CloseDoor();
             }
+
+            doorClosedText.text = "Door Closed : " + checkpoint.closed;
+            checkpointMetText.text = "Checkpoint Met : " + (!checkpoint.met ? _checkpoint - 1 : _checkpoint);
         }
+        else
+        {
+            doorClosedText.text = "Door Closed : " + false;
+            checkpointMetText.text = "Checkpoint Met : " + 0;
+        }
+
+        awayPlayerText.text = "Away from Player : " + distanceFromPlayer;
 
         if (_checkpoint >= _allCheckpoints.Length || awayFromPlayer)
         {

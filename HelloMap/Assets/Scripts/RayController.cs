@@ -4,15 +4,10 @@ using UnityEngine.UI;
 public class RayController : MonoBehaviour
 {
     [SerializeField] private Text rotationText;
-    [SerializeField] private Text jumpText;
     [SerializeField] private Text northText;
-    [SerializeField] private Text northeastText;
     [SerializeField] private Text eastText;
-    [SerializeField] private Text southeastText;
     [SerializeField] private Text southText;
-    [SerializeField] private Text southwestText;
     [SerializeField] private Text westText;
-    [SerializeField] private Text northwestText;
 
     private Ray _rays;
 
@@ -22,11 +17,10 @@ public class RayController : MonoBehaviour
 
     private void Update()
     {
-        northText.text = "N : " + CastRay(transform.forward);
-        southText.text = "S : " + CastRay(-transform.forward);
-        eastText.text = "E : " + CastRay(transform.right);
-        westText.text = "W : " + CastRay(-transform.right);
-        jumpText.text = "Jump : " + CastRay(Vector3.down);
+        northText.text = "Ray N : " + CastRay(transform.forward);
+        southText.text = "Ray S : " + CastRay(-transform.forward);
+        eastText.text = "Ray E : " + CastRay(transform.right);
+        westText.text = "Ray W : " + CastRay(-transform.right);
         rotationText.text = "Rotation : " + transform.eulerAngles.y;
     }
 

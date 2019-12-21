@@ -10,6 +10,6 @@ public class LevelEndController : MonoBehaviour
     {
         if (!other.CompareTag("Player"))
             return;
-        SceneManager.LoadScene("LevelEnd");
+//        LevelController.LastLevel();
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerKeyRayController : MonoBehaviour
 {
@@ -17,7 +18,7 @@ public class PlayerKeyRayController : MonoBehaviour
     {
         var collider = CastRay();
         var keyLayer = LayerMask.NameToLayer("Key");
-        _textController.LinkedObject = !ReferenceEquals(collider, null) 
+        _textController.linkedObject = !ReferenceEquals(collider, null)
                                        && collider.gameObject.layer == keyLayer
                                            ? collider.gameObject.GetInstanceID()
                                            : -1; //TODO check if collision -1
@@ -32,7 +33,7 @@ public class PlayerKeyRayController : MonoBehaviour
         var keyLayer = 1 << LayerMask.NameToLayer("Key");
         var envLayer = 1 << LayerMask.NameToLayer("Environment");
         var mask = keyLayer | envLayer;
-        
+
         Physics.Raycast(position, //TODO: boxcast/spherecast or similar
                         direction,
                         out hit,

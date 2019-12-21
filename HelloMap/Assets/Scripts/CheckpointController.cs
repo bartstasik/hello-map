@@ -2,15 +2,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CheckpointController : MonoBehaviour
 {
-    [SerializeField] public Animator door;
     [SerializeField] private Animator[] backDoors;
     [SerializeField] private Collider key;
+    [SerializeField] private bool isLast;
 
-    [SerializeField] public Collider doorCollider;
-
+    [SerializeField] public Animator door;
+    
+    [NonSerialized] public Collider doorCollider;
+    [NonSerialized] public bool closed;
     [NonSerialized] public bool met;
 
     private static readonly int Open = Animator.StringToHash("Open");
@@ -24,6 +27,7 @@ public class CheckpointController : MonoBehaviour
     {
         _keyPrompt = GameObject.Find("KeyPrompt");
         _keyTextController = _keyPrompt.GetComponent<KeyTextController>();
+        doorCollider = door.GetComponent<Collider>();
 
         foreach (var backDoor in backDoors)
             backDoor.SetTrigger(Open);
@@ -33,10 +37,16 @@ public class CheckpointController : MonoBehaviour
 
     private void Update()
     {
-        if (!_keyTextController.LinkedObject.Equals(key.gameObject.GetInstanceID())
+        if (!_keyTextController.linkedObject.Equals(key.gameObject.GetInstanceID())
             || !Input.GetKey(KeyCode.E))
             return;
+        if (isLast)
+        {
+            LevelController.NextLevel();
+            return;
+        }
         met = true;
+        closed = false;
         door.SetTrigger(Open);
         foreach (var backDoor in backDoors)
             backDoor.SetTrigger(Close);
@@ -45,7 +55,7 @@ public class CheckpointController : MonoBehaviour
     public void CloseDoor()
     {
         door.SetTrigger(Close);
-        met = true;
+        closed = true;
     }
 
 //    private IEnumerator OnTriggerEnter(Collider other)

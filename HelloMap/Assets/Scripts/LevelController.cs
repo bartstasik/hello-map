@@ -6,13 +6,23 @@ using UnityEngine.SceneManagement;
 
 public class LevelController : MonoBehaviour
 {
-    private void OnTriggerEnter(Collider other)
+    public static void NextLevel()
     {
-        if (!other.CompareTag("Player")) 
-            return;
         var nextScene = SceneManager.GetActiveScene().buildIndex + 1;
         if (nextScene > SceneManager.sceneCount)
             return;
         SceneManager.LoadScene(nextScene);
+    }
+
+    public static void LastLevel()
+    {
+        SceneManager.LoadScene("LevelEnd");
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag("Player"))
+            return;
+        NextLevel();
     }
 }
