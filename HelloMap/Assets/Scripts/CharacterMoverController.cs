@@ -5,8 +5,6 @@ using Vector3 = UnityEngine.Vector3;
 [RequireComponent(typeof(Rigidbody))]
 public class CharacterMoverController : MonoBehaviour
 {
-    [SerializeField] private GameObject minimapDot;
-    
     private Rigidbody _body;
     private CharacterBehaviour _container;
 
@@ -15,7 +13,9 @@ public class CharacterMoverController : MonoBehaviour
         _container = gameObject.GetComponentInParent<CharacterBehaviour>();
         _body = gameObject.GetComponent<Rigidbody>();
 
-        gameObject.layer = _container.gameObject.layer;
+        gameObject.tag = _container.characterType.ToString();
+        gameObject.layer = LayerMask.NameToLayer(_container.characterType.ToString());
+        Physics.IgnoreLayerCollision(gameObject.layer, gameObject.layer);
     }
 
     private void OnCollisionStay(Collision other)

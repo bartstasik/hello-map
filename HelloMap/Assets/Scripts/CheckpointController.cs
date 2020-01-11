@@ -29,10 +29,10 @@ public class CheckpointController : MonoBehaviour
         _keyTextController = _keyPrompt.GetComponent<KeyTextController>();
         doorCollider = door.GetComponent<Collider>();
 
-        foreach (var backDoor in backDoors)
-            backDoor.SetTrigger(Open);
-
-        door.SetTrigger(Open);
+//        foreach (var backDoor in backDoors)
+//            backDoor.SetTrigger(Open);
+//
+//        door.SetTrigger(Open);
     }
 
     private void Update()
@@ -57,11 +57,4 @@ public class CheckpointController : MonoBehaviour
         door.SetTrigger(Close);
         closed = true;
     }
-
-//    private IEnumerator OnTriggerEnter(Collider other)
-//    {
-//        if (!other.CompareTag("NPC")) yield break;
-//        yield return new WaitForSeconds(3);
-//        door.SetTrigger(Close);
-//    }
 }

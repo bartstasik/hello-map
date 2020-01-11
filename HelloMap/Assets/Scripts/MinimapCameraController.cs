@@ -3,40 +3,42 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static CharacterBehaviour.Type;
 
 public class MinimapCameraController : MonoBehaviour
 {
-
     [SerializeField] private GameObject dot;
     [SerializeField] private Material red;
     [SerializeField] private Material green;
 
-    private Dictionary<GameObject, GameObject> characters = new Dictionary<GameObject, GameObject>();
+    private Dictionary<CharacterMoverController, GameObject> characters = new Dictionary<CharacterMoverController, GameObject>();
 
-    private void Start()
+    public void AddCharacter(CharacterMoverController character)
     {
-        var playerCharacter = GameObject.FindGameObjectWithTag("Player");
-        var npcCharacters = GameObject.FindGameObjectsWithTag("NPC");
-
-        var playerDot = Instantiate(dot, playerCharacter.transform.position, Quaternion.identity);
-        playerDot.GetComponent<Renderer>().material = green;
-        playerDot.transform.parent = playerCharacter.transform;
-        playerDot.SetActive(true);
-
-        characters.Add(playerCharacter, playerDot);
-        
-        foreach (var npc in npcCharacters)
+        var characterDot = Instantiate(dot, character.transform.position, Quaternion.identity);
+        Material dotColour;
+        switch (character.GetComponentInParent<CharacterBehaviour>().characterType)
         {
-            var npcDot = Instantiate(dot, npc.transform.position, Quaternion.identity);
-            npcDot.GetComponent<Renderer>().material = red;
-            npcDot.transform.parent = npc.transform;
-            npcDot.SetActive(true);
-            characters.Add(npc, npcDot);
+            case Player:
+                dotColour = green;
+                break;
+            case NPC:
+                dotColour = red;
+                break;
+            default:
+                dotColour = red;
+                break;
         }
+        characterDot.GetComponent<Renderer>().material = dotColour;
+        characterDot.transform.parent = character.transform;
+        characterDot.SetActive(true);
+        characters.Add(character, characterDot);
     }
-
-    void FixedUpdate()
+    
+    private void Update()
     {
+        if (characters.Count <= 0)
+            return;
         foreach (var character in characters)
         {
             if (character.Key.CompareTag("Player"))

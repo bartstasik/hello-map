@@ -1,67 +1,53 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = System.Object;
 
-public class CharacterBehaviour : MonoBehaviour
+public class PlayerBehaviour : MonoBehaviour
 {
     public enum Type
     {
         Player,
-        NPC
+        NonPlayerCharacter
     }
 
-    public Type characterType = Type.NPC;
+    public Type playerType = Type.NonPlayerCharacter;
 
     public float runSpeed = 5;
     public float sprintSpeed = 10;
     public float jumpSpeed = 3;
     public float lookSpeed = 5;
     public float rotationSpeed = 10;
-    
+
     [NonSerialized] public bool SprintEvent, JumpEvent, Grounded;
     [NonSerialized] public float VAxisEvent, HAxisEvent, HAxisRawEvent, RotateXEvent, Speed;
-    [NonSerialized] public Checkpoint[] allCheckpoints;
+    
+    [SerializeField] private GameObject[] _allCheckpoints;
     
     [SerializeField] private GameObject mainPlayer;
     [SerializeField] private Text doorClosedText, checkpointMetText, awayPlayerText;
 
     [SerializeField] private short doorSensorDistance = 2;
 
+    private CheckpointController[] _allCheckpointTriggers;
+    
     private Transform _transform;
 
     private short _checkpoint;
 
-    public void MoveCharacter(bool spring,
-                              float rotate,
-                              float moveVertical,
-                              float moveHorizontal)
-    {
-        SprintEvent = spring;
-        JumpEvent = false;
-        RotateXEvent = rotate;
-        VAxisEvent = moveVertical;
-        HAxisEvent = moveHorizontal;
-        if (moveHorizontal > 0)
-            HAxisRawEvent = 1;
-        else if (moveHorizontal < 0)
-            HAxisRawEvent = -1;
-        else
-            HAxisRawEvent = 0;
-    }
-
     private void Start()
     {
         _transform = GetComponentInChildren<CharacterMoverController>().transform;
+        _allCheckpointTriggers = new CheckpointController[_allCheckpoints.Length];
+        for (var i = 0; i < _allCheckpointTriggers.Length; i++)
+            _allCheckpointTriggers[i] = _allCheckpoints[i].GetComponent<CheckpointController>();
     }
 
     private void FixedUpdate()
     {
-        switch (characterType)
+        switch (playerType)
         {
-            case Type.NPC:
+            case Type.NonPlayerCharacter:
                 MoveByCheckpoint();
                 break;
             case Type.Player:
@@ -74,19 +60,35 @@ public class CharacterBehaviour : MonoBehaviour
         Speed = SprintEvent ? sprintSpeed : runSpeed;
     }
 
+    private void MoveCharacter(bool sprint,
+                               float rotate,
+                               float moveVertical,
+                               float moveHorizontal)
+    {
+        SprintEvent = sprint;
+        JumpEvent = false;
+        RotateXEvent = rotate;
+        VAxisEvent = moveVertical;
+        HAxisEvent = moveHorizontal;
+        if (moveHorizontal > 0)
+            HAxisRawEvent = 1;
+        else if (moveHorizontal < 0)
+            HAxisRawEvent = -1;
+        else
+            HAxisRawEvent = 0;
+    }
+
     private void MoveByPlayerInput()
     {
         MoveCharacter(Input.GetButton("Sprint"),
                       Input.GetAxis("Mouse X"),
                       Input.GetAxis("Vertical"),
-                      Input.GetAxis("Horizontal"));
+                      Input.GetAxis("Horizontal")
+        );
     }
 
     private void MoveByCheckpoint()
     {
-        if (allCheckpoints == null)
-            return;
-        
         double distance;
         float normalisedAngle;
 
@@ -95,35 +97,35 @@ public class CharacterBehaviour : MonoBehaviour
 
         if (_checkpoint > 0)
         {
-            var checkpoint = allCheckpoints[_checkpoint - 1];
-            var checkpointDoor = checkpoint.frontDoor.transform;
+            var checkpoint = _allCheckpointTriggers[_checkpoint - 1];
+            var checkpointDoor = checkpoint.door.transform;
             var checkpointDoorPosition = checkpointDoor.position;
             var checkpointDoorForward = checkpointDoor.forward;
 
-            var width = (checkpoint.frontDoorCollider.bounds.size.y + doorSensorDistance);
+            var width = (checkpoint.doorCollider.bounds.size.y + doorSensorDistance);
 
             float xAdjustment;
             float zAdjustment;
 
-            if (checkpoint.frontDoor.transform.forward.z > 0.1)
+            if (checkpoint.door.transform.forward.z > 0.1)
             {
-                xAdjustment = checkpoint.frontDoorCollider.bounds.size.y / 2;
+                xAdjustment = checkpoint.doorCollider.bounds.size.y / 2;
                 zAdjustment = 0;
             }
-            else if (checkpoint.frontDoor.transform.forward.z < -0.1)
+            else if (checkpoint.door.transform.forward.z < -0.1)
             {
-                xAdjustment = -checkpoint.frontDoorCollider.bounds.size.y / 2;
+                xAdjustment = -checkpoint.doorCollider.bounds.size.y / 2;
                 zAdjustment = 0;
             }
-            else if (checkpoint.frontDoor.transform.forward.x > 0)
+            else if (checkpoint.door.transform.forward.x > 0)
             {
                 xAdjustment = 0;
-                zAdjustment = -checkpoint.frontDoorCollider.bounds.size.y / 2;
+                zAdjustment = -checkpoint.doorCollider.bounds.size.y / 2;
             }
-            else if (checkpoint.frontDoor.transform.forward.x < 0)
+            else if (checkpoint.door.transform.forward.x < 0)
             {
                 xAdjustment = 0;
-                zAdjustment = checkpoint.frontDoorCollider.bounds.size.y / 2;
+                zAdjustment = checkpoint.doorCollider.bounds.size.y / 2;
             }
             else
             {
@@ -140,12 +142,12 @@ public class CharacterBehaviour : MonoBehaviour
                 new Vector2(_transform.position.x, _transform.position.z),
                 new Vector2(doorPosition.x, doorPosition.z));
 
-            if (!checkpoint.frontClosed && Mathf.RoundToInt((float) distanceFromDoor) <= 1)
+            if (!checkpoint.closed && Mathf.RoundToInt((float) distanceFromDoor) <= 1)
             {
-                checkpoint.CloseFrontDoor();
+                checkpoint.CloseDoor();
             }
 
-            doorClosedText.text = "Door Closed : " + checkpoint.frontClosed;
+            doorClosedText.text = "Door Closed : " + checkpoint.closed;
             checkpointMetText.text = "Checkpoint Met : " + (!checkpoint.met ? _checkpoint - 1 : _checkpoint);
         }
         else
@@ -156,9 +158,13 @@ public class CharacterBehaviour : MonoBehaviour
 
         awayPlayerText.text = "Away from Player : " + distanceFromPlayer;
 
-        if (_checkpoint >= allCheckpoints.Length || awayFromPlayer)
+        if (_checkpoint >= _allCheckpoints.Length || awayFromPlayer)
         {
-            MoveCharacter(false, 0, 0, 0);
+            MoveCharacter(false,
+                          0,
+                          0,
+                          0
+            );
             return;
         }
 
@@ -169,12 +175,13 @@ public class CharacterBehaviour : MonoBehaviour
                       distance < 1.3
                           ? IncrementCheckpoint()
                           : 1 - Mathf.Abs(normalisedAngle),
-                      0); //TODO: simplify // 2 * normalisedAngle
+                      0
+        ); //TODO: simplify // 2 * normalisedAngle
     }
 
     private (double, float) GetCheckpoint(short checkpoint)
     {
-        var target = allCheckpoints[checkpoint].flag.transform.position;
+        var target = _allCheckpoints[checkpoint].transform.position;
         var currentOffset = _transform.InverseTransformPoint(target);
         var angle = Quaternion.LookRotation(currentOffset).eulerAngles.y;
         return (DistanceBetween(_transform.position, target),
