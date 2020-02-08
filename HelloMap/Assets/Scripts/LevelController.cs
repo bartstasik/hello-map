@@ -14,6 +14,17 @@ public class LevelController : MonoBehaviour
         SceneManager.LoadScene(nextScene);
     }
 
+    public static void RestartLevel()
+    {
+        SceneManager.LoadScene(
+            SceneManager.GetActiveScene().buildIndex);
+    }
+    
+    public static void ZeroLevel()
+    {
+        SceneManager.LoadScene(0);
+    }
+
     public static void LastLevel()
     {
         SceneManager.LoadScene("LevelEnd");

@@ -37,7 +37,7 @@ public class CheckpointController : MonoBehaviour
 
     private void Update()
     {
-        if (!_keyTextController.linkedObject.Equals(key.gameObject.GetInstanceID())
+        if (!_keyTextController.linkedKey.Equals(key.gameObject.GetInstanceID())
             || !Input.GetKey(KeyCode.E))
             return;
         if (isLast)

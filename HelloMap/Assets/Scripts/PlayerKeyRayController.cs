@@ -7,21 +7,32 @@ public class PlayerKeyRayController : MonoBehaviour
 {
     private GameObject _text;
     private KeyTextController _textController;
+    private CharacterBehaviour _container;
+    private int lastInstanceId;
 
     void Start()
     {
         _text = GameObject.Find("KeyPrompt").gameObject;
         _textController = _text.GetComponent<KeyTextController>();
+        _container = gameObject.GetComponentInParent<CharacterBehaviour>();
     }
 
     void Update()
     {
         var collider = CastRay();
         var keyLayer = LayerMask.NameToLayer("Key");
-        _textController.linkedObject = !ReferenceEquals(collider, null)
-                                       && collider.gameObject.layer == keyLayer
-                                           ? collider.gameObject.GetInstanceID()
-                                           : -1; //TODO check if collision -1
+        var instanceId = ReferenceEquals(collider, null) ? -1 : collider.gameObject.GetInstanceID();
+        if (!ReferenceEquals(collider, null) && collider.gameObject.layer == keyLayer)
+        {
+            _textController.linkedKey.Add(instanceId);
+            lastInstanceId = instanceId;
+        }
+        else if (lastInstanceId != -1)
+        {
+            _textController.linkedKey.Remove(lastInstanceId); //TODO check if collision -1
+            lastInstanceId = -1;
+        }
+        _textController.buttonPressed = _container.KeyEvent; // TODO: change when asynchronous
     }
 
     private Collider CastRay()

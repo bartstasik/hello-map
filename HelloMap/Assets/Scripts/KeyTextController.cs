@@ -6,20 +6,20 @@ using UnityEngine.UI;
 
 public class KeyTextController : MonoBehaviour
 {
-    [SerializeField] private Text seeKeyText;
-    
-    [NonSerialized] public int linkedObject = -1;
+    [NonSerialized] public HashSet<int> linkedKey;
+    [NonSerialized] public bool buttonPressed;
 
     private GameObject _promptCanvas;
 
     private void Start()
     {
         _promptCanvas = GameObject.Find("PressE").gameObject;
+        linkedKey = new HashSet<int>();
     }
 
     private void Update()
     {
-        _promptCanvas.SetActive(linkedObject != -1);
-        seeKeyText.text = "Key Seen : " + (linkedObject != -1);
+        _promptCanvas.SetActive(linkedKey.Count != 0);
+        DataContainer.seesKey = linkedKey.Count != 0;
     }
 }

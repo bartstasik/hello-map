@@ -1,30 +1,44 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Net;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class RayController : MonoBehaviour
 {
-    [SerializeField] private Text rotationText;
-    [SerializeField] private Text northText;
-    [SerializeField] private Text eastText;
-    [SerializeField] private Text southText;
-    [SerializeField] private Text westText;
+    [NonSerialized] public double
+        rotation,
+        north,
+        northwest,
+        northeast,
+        east,
+        south,
+        west;
 
     private Ray _rays;
 
-    private void Start()
-    {
-    }
-
     private void Update()
     {
-        northText.text = "Ray N : " + CastRay(transform.forward);
-        southText.text = "Ray S : " + CastRay(-transform.forward);
-        eastText.text = "Ray E : " + CastRay(transform.right);
-        westText.text = "Ray W : " + CastRay(-transform.right);
-        rotationText.text = "Rotation : " + transform.eulerAngles.y;
+        rotation = transform.eulerAngles.y;
+        north = CastRay(transform.forward);
+        south = CastRay(-transform.forward);
+        east = CastRay(transform.right);
+        west = CastRay(-transform.right);
+
+        var sqrtHalf = Mathf.Sqrt(0.5f);
+        northeast = CastRay(transform.right * sqrtHalf + transform.forward * sqrtHalf);
+        northwest = CastRay(-transform.right * sqrtHalf + transform.forward * sqrtHalf);
+        
+        DataContainer.northRay = north;
+        DataContainer.northwestRay = northwest;
+        DataContainer.northeastRay = northeast;
+        DataContainer.southRay = south;
+        DataContainer.eastRay = east;
+        DataContainer.westRay = west;
+//        DataContainer.rotation = rotation;
     }
 
-    private string CastRay(Vector3 direction)
+    private double CastRay(Vector3 direction)
     {
         var position = transform.position;
         RaycastHit hit;
@@ -35,6 +49,6 @@ public class RayController : MonoBehaviour
                         LayerMask.GetMask("Environment"));
         Debug.DrawRay(position, direction);
         var colliderNotExists = ReferenceEquals(hit.collider, null);
-        return (colliderNotExists ? -1f : hit.distance).ToString(); //TODO: expensive null check
+        return (colliderNotExists ? -1f : hit.distance); //TODO: expensive null check
     }
 }
