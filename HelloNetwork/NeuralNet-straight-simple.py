@@ -10,44 +10,54 @@ from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.python.saved_model import builder
 from tensorflow.python.keras.callbacks import EarlyStopping
+from tensorflow.python.client import device_lib
+
+
+print(device_lib.list_local_devices())
+
 
 DATASET_INPUTS = []
 DATASET_LABELS = []
 
-for i in range(117):
-# for i in range(61):
+# for i in range(117):
+# for i in range(601, 1002):
+for i in range(0, 1002):
+    # for i in range(61):
     # data = pd.read_csv("data/simple-straight/test-simple-straight-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle/test-simple-obstacle-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle-lookat/output_%s.csv" % i)
-    data = pd.read_csv("data_fixed_ray/simple-obstacle-lookat/output_%s.csv" % i)
-    data = data[~data['rotation'].isin(['nan'])]
-    data = data[~data['northRay'].isin(['nan'])]
-    data = data[~data['northwestRay'].isin(['nan'])]
-    data = data[~data['northeastRay'].isin(['nan'])]
-    data = data[~data['eastRay'].isin(['nan'])]
-    data = data[~data['southRay'].isin(['nan'])]
-    data = data[~data['westRay'].isin(['nan'])]
-    data = data[~data['doorClosed'].isin(['nan'])]
-    data = data[~data['checkpointMet'].isin(['nan'])]
-    data = data[~data['distanceFromPlayer'].isin(['nan'])]
-    data = data[~data['seesKey'].isin(['nan'])]
-    data = data.dropna(axis='columns')
+    try:
+        data = pd.read_csv("data_fixed_ray/simple-obstacle-lookat/output_%s.csv" % i)
+        data = data[~data['rotation'].isin(['nan'])]
+        data = data[~data['northRay'].isin(['nan'])]
+        data = data[~data['northwestRay'].isin(['nan'])]
+        data = data[~data['northeastRay'].isin(['nan'])]
+        data = data[~data['eastRay'].isin(['nan'])]
+        data = data[~data['southRay'].isin(['nan'])]
+        data = data[~data['westRay'].isin(['nan'])]
+        data = data[~data['doorClosed'].isin(['nan'])]
+        data = data[~data['checkpointMet'].isin(['nan'])]
+        data = data[~data['distanceFromPlayer'].isin(['nan'])]
+        data = data[~data['seesKey'].isin(['nan'])]
+        data = data.dropna(axis='columns')
 
-    data.replace(False, 0, inplace=True)
-    data.replace(True, 1, inplace=True)
+        data.replace(False, 0, inplace=True)
+        data.replace(True, 1, inplace=True)
 
-    inputs = data.filter(items=['rotation',
-                                'northRay',
-                                'northwestRay',
-                                'northeastRay',
-                                'eastRay',
-                                'westRay',
-                                'distanceFromPlayer']).values
-    labels = data.filter(items=['mouseRotation',
-                                'forwardButtonPressed']).values
+        inputs = data.filter(items=['rotation',
+                                    'northRay',
+                                    'northwestRay',
+                                    'northeastRay',
+                                    'eastRay',
+                                    'westRay',
+                                    'distanceFromPlayer']).values
+        labels = data.filter(items=['mouseRotation',
+                                    'forwardButtonPressed']).values
 
-    DATASET_INPUTS.append(inputs)
-    DATASET_LABELS.append(labels)
+        DATASET_INPUTS.append(inputs)
+        DATASET_LABELS.append(labels)
+    except KeyError:
+        print(i)
 
 # inputs = DATASET.filter(items=['timestamp',
 #                                'rotation',
@@ -107,7 +117,7 @@ input_seq, input_timesteps, input_feat = inputs.shape
 label_seq, label_timesteps, label_feat = labels.shape
 
 
-def lstm(inputs, labels):
+def lstm(inputs, labels, patience):
     # inputs = inputs.reshape((1, input_timesteps, input_num))
     # labels = labels.reshape((1, label_timesteps, label_num))
 
@@ -126,14 +136,21 @@ def lstm(inputs, labels):
 
     model.summary()
 
-    model.fit(inputs, labels, epochs=250)
+    model.fit(inputs, labels, epochs=1000, shuffle=True,
+              callbacks=[EarlyStopping(monitor='loss',
+                                       min_delta=0,
+                                       patience=patience,
+                                       verbose=0,
+                                       mode='auto',
+                                       baseline=None,
+                                       restore_best_weights=True)])
 
-    model.save('deep with skip 73 percent.h5')
+    model.save('model.h5')
 
     print()
 
 
-def lstm_simple(inputs, labels):
+def lstm_simple(inputs, labels, patience):
     # inputs = inputs.reshape((1, input_timesteps, input_num))
     # labels = labels.reshape((1, label_timesteps, label_num))
 
@@ -143,7 +160,7 @@ def lstm_simple(inputs, labels):
     model.add(LSTM(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, input_feat)))
     # model.add(Dense(128, activation='relu'))
     # model.add(SimpleRNN(128))
-    model.add(Dense(label_feat, activation='relu'))
+    model.add(Dense(label_feat, activation='tanh'))
 
     model.compile(optimizer='sgd',
                   loss='binary_crossentropy',
@@ -151,9 +168,16 @@ def lstm_simple(inputs, labels):
 
     model.summary()
 
-    model.fit(inputs, labels, epochs=6)
+    model.fit(inputs, labels, epochs=1000, shuffle=True,
+              callbacks=[EarlyStopping(monitor='loss',
+                                       min_delta=0,
+                                       patience=patience,
+                                       verbose=0,
+                                       mode='auto',
+                                       baseline=None,
+                                       restore_best_weights=True)])
 
-    model.save('simple-straight.h5')
+    model.save('model.h5')
 
     print()
 
@@ -165,6 +189,7 @@ def rnn(inputs, labels, patience):
     model = Sequential()
 
     # model.add(Dense(16, activation=relu, input_shape=(10,)))
+    # model.add(SimpleRNN(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, input_feat)))
     model.add(SimpleRNN(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, input_feat)))
     # model.add(SimpleRNN(128))
     model.add(Dense(label_feat, activation='tanh'))
@@ -178,11 +203,67 @@ def rnn(inputs, labels, patience):
     model.fit(inputs, labels, epochs=1000, shuffle=True,
               callbacks=[EarlyStopping(monitor='loss',
                                        min_delta=0,
-                                       patience=0,
+                                       patience=patience,
                                        verbose=0,
                                        mode='auto',
                                        baseline=None,
-                                       restore_best_weights=False)])
+                                       restore_best_weights=True)])
+
+    model.save('model.h5')
+
+    print()
+
+
+def rnn_load(inputs, labels, patience, name):
+    # inputs = inputs.reshape((1, input_timesteps, input_num))
+    # labels = labels.reshape((1, label_timesteps, label_num))
+
+    model = tf.keras.models.load_model(name)
+
+    model.summary()
+
+    model.fit(inputs, labels, epochs=1000, shuffle=True,
+              callbacks=[EarlyStopping(monitor='loss',
+                                       min_delta=0,
+                                       patience=patience,
+                                       verbose=0,
+                                       mode='auto',
+                                       baseline=None,
+                                       restore_best_weights=True)])
+
+    model.save('model.h5')
+
+    print()
+
+
+def lstm_new(inputs, labels, patience):
+    # inputs = inputs.reshape((1, input_timesteps, input_num))
+    # labels = labels.reshape((1, label_timesteps, label_num))
+
+    model = Sequential()
+
+    # model.add(Dense(16, activation=relu, input_shape=(10,)))
+    # model.add(SimpleRNN(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, input_feat)))
+    model.add(LSTM(64, stateful=True, return_sequences=True, batch_input_shape=(1, None, input_feat)))
+    # model.add(SimpleRNN(128))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(label_feat, activation='tanh'))
+
+    model.compile(optimizer='sgd',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+
+    model.summary()
+
+    model.fit(inputs, labels, epochs=1000, shuffle=True,
+              validation_split=0.15,
+              callbacks=[EarlyStopping(monitor='val_loss',
+                                       min_delta=0,
+                                       patience=patience,
+                                       verbose=0,
+                                       mode='auto',
+                                       baseline=None,
+                                       restore_best_weights=True)])
 
     model.save('model.h5')
 
@@ -256,13 +337,13 @@ def dense_3d(inputs, labels, patience):
     model.summary()
 
     model.fit(inputs, labels, epochs=20, shuffle=True)
-              # callbacks=[EarlyStopping(monitor='loss',
-              #                          min_delta=0,
-              #                          patience=patience,
-              #                          verbose=0,
-              #                          mode='auto',
-              #                          baseline=None,
-              #                          restore_best_weights=False)])
+    # callbacks=[EarlyStopping(monitor='loss',
+    #                          min_delta=0,
+    #                          patience=patience,
+    #                          verbose=0,
+    #                          mode='auto',
+    #                          baseline=None,
+    #                          restore_best_weights=False)])
 
     model.save('model.h5')
 
@@ -424,13 +505,17 @@ def non_stateful(inputs, labels):
     print()
 
 
-# lstm(inputs, labels)
-rnn(inputs, labels, 50)
+# lstm(inputs, labels, 10)
+# rnn(inputs, labels, 10)
+lstm_simple(inputs, labels, 10)
+# rnn_load(inputs, labels, 10, 'BEST MODELS/rnn tanh bigger(117) data 90 percent retrain - better.h5')
+# rnn_load(inputs, labels, 10, 'BEST MODELS/rnn tanh 117-retrain-better plus 484 data 89 percent.h5')
 
 # inputs = inputs.reshape((1, input_timesteps, input_feat))
-model = tf.keras.models.load_model('model.h5')
-array = np.array([[0, 0, 0, 0, 0, 0, 0]], dtype=float)
-array = array.reshape((1, 1, input_feat))
-a = model.predict(array, batch_size=1)
-b = model.predict(inputs)
+# model = tf.keras.models.load_model('model.h5')
+# array = np.array([[0, 0, 0, 0, 0, 0, 0]], dtype=float)
+# array = array.reshape((1, 1, input_feat))
+# a = model.predict(array, batch_size=1)
+# b = model.predict(inputs)
+
 print()

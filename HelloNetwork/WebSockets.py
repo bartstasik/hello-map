@@ -58,6 +58,7 @@ async def echo(websocket, path):
 
 tf.keras.backend.set_learning_phase(0)
 
+# pre_model = tf.keras.models.load_model('rnn tanh bigger data 75 percent.h5')
 pre_model = tf.keras.models.load_model('model.h5')
 
 asyncio.get_event_loop().run_until_complete(
