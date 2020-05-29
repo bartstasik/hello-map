@@ -6,12 +6,16 @@ from tensorflow.python.saved_model import builder
 import nn_message_pb2 as pb
 
 
+def convert_function(n):
+    return max(min(1, np.tan(np.deg2rad(n / 2))), -1)
+
+
 async def echo(websocket, path):
     async for message in websocket:
         a = pb.MovementInput()
         a.ParseFromString(message)
 
-        inputs = np.array([[a.rotation,
+        inputs = np.array([[convert_function(a.rotation),  # a.rotation,
                             a.northRay,
                             a.northwestRay,
                             a.northeastRay,
@@ -51,7 +55,7 @@ async def echo(websocket, path):
         movement_output.rightButtonPressed = False  # round(output[4])
         movement_output.keyButtonPressed = False  # round(output[5])
 
-        print(output)
+        print(round(inputs.flat[0], 2))
 
         await websocket.send(movement_output.SerializeToString())
 

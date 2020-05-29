@@ -12,23 +12,30 @@ from tensorflow.python.saved_model import builder
 from tensorflow.python.keras.callbacks import EarlyStopping
 from tensorflow.python.client import device_lib
 
-
 print(device_lib.list_local_devices())
 
 
 DATASET_INPUTS = []
 DATASET_LABELS = []
 
+
+def convert_function(n):
+    return max(min(1, np.tan(np.deg2rad(n/2))), -1)
+
+
 # for i in range(117):
 # for i in range(601, 1002):
-for i in range(0, 1002):
+# for i in range(0, 1002):
+for i in range(1002,1101):
+# for i in range(1002,1201):
     # for i in range(61):
     # data = pd.read_csv("data/simple-straight/test-simple-straight-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle/test-simple-obstacle-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle-lookat/output_%s.csv" % i)
     try:
         data = pd.read_csv("data_fixed_ray/simple-obstacle-lookat/output_%s.csv" % i)
-        data = data[~data['rotation'].isin(['nan'])]
+        data = data[(~data['rotation'].isin(['nan']))]
+        data['rotation'] = data['rotation'].apply(lambda x: convert_function(x))
         data = data[~data['northRay'].isin(['nan'])]
         data = data[~data['northwestRay'].isin(['nan'])]
         data = data[~data['northeastRay'].isin(['nan'])]
@@ -510,6 +517,8 @@ def non_stateful(inputs, labels):
 lstm_simple(inputs, labels, 10)
 # rnn_load(inputs, labels, 10, 'BEST MODELS/rnn tanh bigger(117) data 90 percent retrain - better.h5')
 # rnn_load(inputs, labels, 10, 'BEST MODELS/rnn tanh 117-retrain-better plus 484 data 89 percent.h5')
+# rnn_load(inputs, labels, 10, 'rnn tanh 100 - only simple map 97 percent.h5')
+# rnn_load(inputs, labels, 10, 'rnn tanh bigger data 75 percent.h5')
 
 # inputs = inputs.reshape((1, input_timesteps, input_feat))
 # model = tf.keras.models.load_model('model.h5')
