@@ -5,15 +5,16 @@ import os
 
 from tensorflow.python.keras import Sequential, Model
 from tensorflow.python.keras.layers import Dense, TimeDistributed, LSTM, GRU, SimpleRNN, Input, concatenate, Dropout, \
-    GaussianDropout, merge
+    GaussianDropout, merge, CuDNNLSTM
 from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.python.saved_model import builder
 from tensorflow.python.keras.callbacks import EarlyStopping
 from tensorflow.python.client import device_lib
 
-print(device_lib.list_local_devices())
 
+print(tf.test.is_built_with_cuda())
+print(device_lib.list_local_devices())
 
 DATASET_INPUTS = []
 DATASET_LABELS = []
@@ -26,8 +27,9 @@ def convert_function(n):
 # for i in range(117):
 # for i in range(601, 1002):
 # for i in range(0, 1002):
-for i in range(1002,1101):
+# for i in range(1002,1101):
 # for i in range(1002,1201):
+for i in range(1201):
     # for i in range(61):
     # data = pd.read_csv("data/simple-straight/test-simple-straight-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle/test-simple-obstacle-%s.csv" % i)
@@ -164,7 +166,7 @@ def lstm_simple(inputs, labels, patience):
     model = Sequential()
 
     # model.add(Dense(16, activation=relu, input_shape=(10,)))
-    model.add(LSTM(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, input_feat)))
+    model.add(CuDNNLSTM(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, input_feat)))
     # model.add(Dense(128, activation='relu'))
     # model.add(SimpleRNN(128))
     model.add(Dense(label_feat, activation='tanh'))

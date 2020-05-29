@@ -3,7 +3,11 @@ import numpy as np
 import pandas as pd
 import asyncio, websockets, pickle, os, math
 from tensorflow.python.saved_model import builder
+from tensorflow.python.client import device_lib
 import nn_message_pb2 as pb
+
+print(tf.test.is_built_with_cuda())
+print(device_lib.list_local_devices())
 
 
 def convert_function(n):
