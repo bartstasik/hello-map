@@ -85,8 +85,6 @@ async def echo(websocket, path):
         movement_output.rightButtonPressed = False  # round(output[4])
         movement_output.keyButtonPressed = False  # round(output[5])
 
-        print(round(inputs.flat[0], 2))
-
         await websocket.send(movement_output.SerializeToString())
 
 

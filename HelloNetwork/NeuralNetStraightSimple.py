@@ -27,9 +27,9 @@ def convert_function(n):
 # for i in range(601, 1002):
 # for i in range(0, 1002):
 # for i in range(1002,1101):
-# for i in range(1002,1201):
-for i in range(1201):
-    # for i in range(61):
+for i in range(1002,1201):
+# for i in range(1201):
+# for i in range(61):
     # data = pd.read_csv("data/simple-straight/test-simple-straight-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle/test-simple-obstacle-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle-lookat/output_%s.csv" % i)
@@ -188,6 +188,40 @@ def lstm_simple(inputs, labels, patience):
     model.save('model.h5')
 
     print()
+
+
+def lstm_load(inputs, labels, patience, name):
+    # inputs = inputs.reshape((1, input_timesteps, input_num))
+    # labels = labels.reshape((1, label_timesteps, label_num))
+
+    model = Sequential()
+
+    # model.add(Dense(16, activation=relu, input_shape=(10,)))
+    model.add(LSTM(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, 7)))
+    # model.add(Dense(128, activation='relu'))
+    # model.add(SimpleRNN(128))
+    model.add(Dense(2, activation='tanh'))
+
+    model.load_weights(name)
+
+    model.compile(optimizer='sgd',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+
+    model.summary()
+
+    model.fit(inputs, labels, epochs=1000, shuffle=True,
+              callbacks=[EarlyStopping(monitor='loss',
+                                       min_delta=0,
+                                       patience=patience,
+                                       verbose=0,
+                                       mode='auto',
+                                       baseline=None,
+                                       restore_best_weights=True)])
+
+    model.save('model.h5')
+
+    return model
 
 
 def rnn(inputs, labels, patience):
@@ -520,6 +554,7 @@ lstm_simple(inputs, labels, 10)
 # rnn_load(inputs, labels, 10, 'BEST MODELS/rnn tanh 117-retrain-better plus 484 data 89 percent.h5')
 # rnn_load(inputs, labels, 10, 'rnn tanh 100 - only simple map 97 percent.h5')
 # rnn_load(inputs, labels, 10, 'rnn tanh bigger data 75 percent.h5')
+# lstm_load(inputs, labels, 10, 'model.h5')
 
 # inputs = inputs.reshape((1, input_timesteps, input_feat))
 # model = tf.keras.models.load_model('model.h5')
