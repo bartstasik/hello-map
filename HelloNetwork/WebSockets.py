@@ -1,9 +1,12 @@
-import tensorflow as tf
+import asyncio
 import numpy as np
-import pandas as pd
-import asyncio, websockets, pickle, os, math
-from tensorflow.python.saved_model import builder
+import tensorflow as tf
+import websockets
 from tensorflow.python.client import device_lib
+from tensorflow.python.keras import Sequential
+from tensorflow.python.keras.callbacks import EarlyStopping
+from tensorflow.python.keras.layers import Dense, LSTM
+
 import nn_message_pb2 as pb
 
 print(tf.test.is_built_with_cuda())
@@ -11,7 +14,30 @@ print(device_lib.list_local_devices())
 
 
 def convert_function(n):
-    return max(min(1, np.tan(np.deg2rad(n / 2))), -1)
+    return n / 180 - 2 if n > 180 else n / 180
+
+
+def lstm_simple():
+    # inputs = inputs.reshape((1, input_timesteps, input_num))
+    # labels = labels.reshape((1, label_timesteps, label_num))
+
+    model = Sequential()
+
+    # model.add(Dense(16, activation=relu, input_shape=(10,)))
+    model.add(LSTM(6, stateful=True, return_sequences=True, batch_input_shape=(1, None, 7)))
+    # model.add(Dense(128, activation='relu'))
+    # model.add(SimpleRNN(128))
+    model.add(Dense(2, activation='tanh'))
+
+    model.load_weights('model.h5')
+
+    model.compile(optimizer='sgd',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+
+    model.summary()
+
+    return model
 
 
 async def echo(websocket, path):
@@ -67,7 +93,8 @@ async def echo(websocket, path):
 tf.keras.backend.set_learning_phase(0)
 
 # pre_model = tf.keras.models.load_model('rnn tanh bigger data 75 percent.h5')
-pre_model = tf.keras.models.load_model('model.h5')
+# pre_model = tf.keras.models.load_model('model.h5')
+pre_model = lstm_simple()
 
 asyncio.get_event_loop().run_until_complete(
     websockets.serve(echo, 'localhost', 6969))

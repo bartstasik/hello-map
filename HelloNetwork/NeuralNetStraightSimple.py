@@ -12,7 +12,6 @@ from tensorflow.python.saved_model import builder
 from tensorflow.python.keras.callbacks import EarlyStopping
 from tensorflow.python.client import device_lib
 
-
 print(tf.test.is_built_with_cuda())
 print(device_lib.list_local_devices())
 
@@ -21,7 +20,7 @@ DATASET_LABELS = []
 
 
 def convert_function(n):
-    return max(min(1, np.tan(np.deg2rad(n/2))), -1)
+    return n / 180 - 2 if n > 180 else n / 180
 
 
 # for i in range(117):
