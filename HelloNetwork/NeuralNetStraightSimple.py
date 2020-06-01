@@ -251,38 +251,90 @@ def lstm_functional(inputs, labels, patience):
     layer_1 = CuDNNLSTM(6, stateful=True, return_sequences=True)(input)
     layer_1 = GaussianNoise(0.5)(layer_1)
     layer_1 = Activation('tanh')(layer_1)
-    output_w_key = Dense(1, activation='relu')(layer_1)
-    output_mouse = Dense(1, activation='tanh')(layer_1)
+    layer_1 = GaussianDropout(0.2)(layer_1)
+    output_mouse = Dense(1, activation='softsign', name='mouse', )(layer_1)
+    output_w_key = Dense(1, activation='tanh', name='w_key')(layer_1)
 
-    model = Model(inputs=input, outputs=concatenate([output_w_key, output_mouse]))
+    model = Model(inputs=input, outputs=[output_mouse, output_w_key])
+
+    losses = {
+        "mouse": "huber_loss",
+        "w_key": "binary_crossentropy"
+    }
 
     model.compile(optimizer='sgd',
-                  loss='binary_crossentropy',
+                  loss=losses,
                   metrics=['accuracy'])
 
     model.summary()
 
-    history = model.fit(inputs, labels, epochs=1000, shuffle=True,
+    labels_ = labels[:, :, 0:1]
+    labels_1 = labels[:, :, 1:2]
+    history = model.fit(inputs[:], [labels_, labels_1], epochs=1000, shuffle=True,
                         validation_split=0.25, verbose=1,
                         callbacks=[EarlyStopping(monitor='val_loss',
                                                  min_delta=0,
                                                  patience=patience,
                                                  verbose=0,
                                                  mode='auto',
-                                                 baseline=None,
+                                                 baseline=0.89,
                                                  restore_best_weights=True)])
 
     model.save('model.h5')
 
+    pyplot.plot(history.history['mouse_loss'])
+    pyplot.plot(history.history['val_mouse_loss'])
+    pyplot.plot(history.history['w_key_loss'])
+    pyplot.plot(history.history['val_w_key_loss'])
     pyplot.plot(history.history['loss'])
     pyplot.plot(history.history['val_loss'])
     pyplot.title('model train vs validation loss')
     pyplot.ylabel('loss')
     pyplot.xlabel('epoch')
-    pyplot.legend(['train', 'validation'], loc='upper right')
+    pyplot.legend(['mouse', 'mouse_val', 'w_key', 'w_key_val', 'loss', 'val_loss'], loc='upper right')
     pyplot.show()
 
     print()
+    # input layer
+    # visible = Input(batch_input_shape=(256, None, input_feat))
+    # # feature extraction
+    # extract = LSTM(10, return_sequences=True)(visible)
+    # # classification output
+    # class11 = LSTM(10)(extract)
+    # class12 = Dense(10, activation='relu')(class11)
+    # output1 = Dense(1, activation='sigmoid')(class12)
+    # # sequence output
+    # output2 = TimeDistributed(Dense(1, activation='linear'))(extract)
+    # # output
+    # model = Model(inputs=visible, outputs=concatenate([output1, output2]))
+    # # summarize layers
+    # model.compile(optimizer='sgd',
+    #               loss="binary_crossentropy",
+    #               metrics=['accuracy'])
+    #
+    # model.summary()
+    #
+    # history = model.fit(inputs, labels, epochs=1000, shuffle=True,
+    #                     validation_split=0.25, verbose=1,
+    #                     callbacks=[EarlyStopping(monitor='val_loss',
+    #                                              min_delta=0,
+    #                                              patience=patience,
+    #                                              verbose=0,
+    #                                              mode='auto',
+    #                                              baseline=None,
+    #                                              restore_best_weights=True)])
+    #
+    # model.save('model.h5')
+    #
+    # pyplot.plot(history.history['loss'])
+    # pyplot.plot(history.history['val_loss'])
+    # pyplot.title('model train vs validation loss')
+    # pyplot.ylabel('loss')
+    # pyplot.xlabel('epoch')
+    # pyplot.legend(['train', 'validation'], loc='upper right')
+    # pyplot.show()
+    #
+    # print()
 
 
 def lstm_load(inputs, labels, patience, name):

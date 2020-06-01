@@ -9,7 +9,7 @@ from tensorflow.python.client import device_lib
 from tensorflow.python.keras import Sequential, Model
 from tensorflow.python.keras.callbacks import EarlyStopping
 from tensorflow.python.keras.layers import Dense, LSTM, GaussianNoise, Activation, BatchNormalization, Input, \
-    concatenate
+    concatenate, GaussianDropout
 
 import nn_message_pb2 as pb
 
@@ -75,15 +75,21 @@ def lstm_functional():
     layer_1 = LSTM(6, stateful=True, return_sequences=True)(input)
     layer_1 = GaussianNoise(0.5)(layer_1)
     layer_1 = Activation('tanh')(layer_1)
-    output_w_key = Dense(1, activation='relu')(layer_1)
-    output_mouse = Dense(1, activation='tanh')(layer_1)
+    layer_1 = GaussianDropout(0.2)(layer_1)
+    output_mouse = Dense(1, activation='softsign', name='mouse', )(layer_1)
+    output_w_key = Dense(1, activation='tanh', name='w_key')(layer_1)
 
-    model = Model(inputs=input, outputs=concatenate([output_w_key, output_mouse]))
+    model = Model(inputs=input, outputs=[output_mouse, output_w_key])
+
+    losses = {
+        "mouse": "huber_loss",
+        "w_key": "binary_crossentropy"
+    }
 
     model.load_weights('model.h5')
 
     model.compile(optimizer='sgd',
-                  loss='binary_crossentropy',
+                  loss=losses,
                   metrics=['accuracy'])
 
     model.summary()
@@ -115,7 +121,7 @@ async def echo(websocket, path):
         #                     a.seesKey]], dtype=float)
         inputs = inputs.reshape((1, 1, inputs.size))
 
-        output = pre_model.predict(inputs)
+        output = np.array(pre_model.predict(inputs))
         output = output.reshape(output.size)
 
         movement_output = pb.MovementOutput()
@@ -135,6 +141,8 @@ async def echo(websocket, path):
         movement_output.leftButtonPressed = False  # round(output[3])
         movement_output.rightButtonPressed = False  # round(output[4])
         movement_output.keyButtonPressed = False  # round(output[5])
+
+        print(output)
 
         await websocket.send(movement_output.SerializeToString())
 
