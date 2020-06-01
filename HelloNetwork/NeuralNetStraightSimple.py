@@ -3,9 +3,10 @@ import numpy as np
 import pandas as pd
 import os
 
+from matplotlib import pyplot
 from tensorflow.python.keras import Sequential, Model
 from tensorflow.python.keras.layers import Dense, TimeDistributed, LSTM, GRU, SimpleRNN, Input, concatenate, Dropout, \
-    GaussianDropout, merge, CuDNNLSTM
+    GaussianDropout, merge, CuDNNLSTM, GaussianNoise, Activation, BatchNormalization
 from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.python.saved_model import builder
@@ -27,9 +28,10 @@ def convert_function(n):
 # for i in range(601, 1002):
 # for i in range(0, 1002):
 # for i in range(1002,1101):
-for i in range(1002,1201):
+# for i in range(1002,1201):
 # for i in range(1201):
-# for i in range(61):
+for i in range(1024):
+    # for i in range(61):
     # data = pd.read_csv("data/simple-straight/test-simple-straight-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle/test-simple-obstacle-%s.csv" % i)
     # data = pd.read_csv("data/simple-obstacle-lookat/output_%s.csv" % i)
@@ -176,16 +178,109 @@ def lstm_simple(inputs, labels, patience):
 
     model.summary()
 
-    model.fit(inputs, labels, epochs=1000, shuffle=True,
-              callbacks=[EarlyStopping(monitor='loss',
-                                       min_delta=0,
-                                       patience=patience,
-                                       verbose=0,
-                                       mode='auto',
-                                       baseline=None,
-                                       restore_best_weights=True)])
+    history = model.fit(inputs, labels, epochs=1000, shuffle=True,
+                        validation_split=0.25, verbose=1,
+                        callbacks=[EarlyStopping(monitor='val_loss',
+                                                 min_delta=0,
+                                                 patience=patience,
+                                                 verbose=0,
+                                                 mode='auto',
+                                                 baseline=None,
+                                                 restore_best_weights=True)])
 
     model.save('model.h5')
+
+    pyplot.plot(history.history['loss'])
+    pyplot.plot(history.history['val_loss'])
+    pyplot.title('model train vs validation loss')
+    pyplot.ylabel('loss')
+    pyplot.xlabel('epoch')
+    pyplot.legend(['train', 'validation'], loc='upper right')
+    pyplot.show()
+
+    print()
+
+
+def lstm_simple_noisy(inputs, labels, patience):
+    # inputs = inputs.reshape((1, input_timesteps, input_num))
+    # labels = labels.reshape((1, label_timesteps, label_num))
+
+    model = Sequential()
+
+    # model.add(Dense(16, activation=relu, input_shape=(10,)))
+    model.add(CuDNNLSTM(6, stateful=True, return_sequences=True,
+                        batch_input_shape=(256, None, input_feat)))
+    # model.add(Dense(128, activation='relu'))
+    # model.add(SimpleRNN(128))
+    model.add(GaussianNoise(0.5))
+    model.add(Activation('tanh'))
+    # model.add(BatchNormalization())
+    model.add(Dense(label_feat, activation='tanh'))
+
+    model.compile(optimizer='sgd',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+
+    model.summary()
+
+    history = model.fit(inputs, labels, epochs=1000, shuffle=True,
+                        validation_split=0.25, verbose=1,
+                        callbacks=[EarlyStopping(monitor='val_loss',
+                                                 min_delta=0,
+                                                 patience=patience,
+                                                 verbose=0,
+                                                 mode='auto',
+                                                 baseline=None,
+                                                 restore_best_weights=True)])
+
+    model.save('model.h5')
+
+    pyplot.plot(history.history['loss'])
+    pyplot.plot(history.history['val_loss'])
+    pyplot.title('model train vs validation loss')
+    pyplot.ylabel('loss')
+    pyplot.xlabel('epoch')
+    pyplot.legend(['train', 'validation'], loc='upper right')
+    pyplot.show()
+
+    print()
+
+
+def lstm_functional(inputs, labels, patience):
+    input = Input(batch_input_shape=(256, None, input_feat))
+    layer_1 = CuDNNLSTM(6, stateful=True, return_sequences=True)(input)
+    layer_1 = GaussianNoise(0.5)(layer_1)
+    layer_1 = Activation('tanh')(layer_1)
+    output_w_key = Dense(1, activation='relu')(layer_1)
+    output_mouse = Dense(1, activation='tanh')(layer_1)
+
+    model = Model(inputs=input, outputs=concatenate([output_w_key, output_mouse]))
+
+    model.compile(optimizer='sgd',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+
+    model.summary()
+
+    history = model.fit(inputs, labels, epochs=1000, shuffle=True,
+                        validation_split=0.25, verbose=1,
+                        callbacks=[EarlyStopping(monitor='val_loss',
+                                                 min_delta=0,
+                                                 patience=patience,
+                                                 verbose=0,
+                                                 mode='auto',
+                                                 baseline=None,
+                                                 restore_best_weights=True)])
+
+    model.save('model.h5')
+
+    pyplot.plot(history.history['loss'])
+    pyplot.plot(history.history['val_loss'])
+    pyplot.title('model train vs validation loss')
+    pyplot.ylabel('loss')
+    pyplot.xlabel('epoch')
+    pyplot.legend(['train', 'validation'], loc='upper right')
+    pyplot.show()
 
     print()
 
@@ -549,7 +644,9 @@ def non_stateful(inputs, labels):
 
 # lstm(inputs, labels, 10)
 # rnn(inputs, labels, 10)
-lstm_simple(inputs, labels, 10)
+# lstm_simple(inputs, labels, 10)
+# lstm_simple_noisy(inputs, labels, 20)
+lstm_functional(inputs, labels, 20)
 # rnn_load(inputs, labels, 10, 'BEST MODELS/rnn tanh bigger(117) data 90 percent retrain - better.h5')
 # rnn_load(inputs, labels, 10, 'BEST MODELS/rnn tanh 117-retrain-better plus 484 data 89 percent.h5')
 # rnn_load(inputs, labels, 10, 'rnn tanh 100 - only simple map 97 percent.h5')
