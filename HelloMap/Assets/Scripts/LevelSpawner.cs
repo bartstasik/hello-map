@@ -26,6 +26,7 @@ public class LevelSpawner : MonoBehaviour
         _checkpointController2.LocateCheckpoints();
         minimap = GameObject.FindGameObjectWithTag("Minimap")
                             ?.GetComponent<MinimapCameraController>();
+        Cursor.visible = false;
 //        characters[0] = NewPair(checkpointController.checkpoints);
 
 //        for (int i = 1; i < population - 1; i++)
