@@ -31,9 +31,6 @@ public class AllCharactersInfo : MonoBehaviour
             case MultilevelController.GamePlayMode.NN_REC:
                 playerBehaviour.characterType = CharacterBehaviour.Type.Player;
                 break;
-            case MultilevelController.GamePlayMode.GA:
-                playerBehaviour.characterType = CharacterBehaviour.Type.GA_NPC;
-                break;
             case MultilevelController.GamePlayMode.NN:
                 playerBehaviour.characterType = CharacterBehaviour.Type.NN_NPC;
                 break;

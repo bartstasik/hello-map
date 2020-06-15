@@ -1413,16 +1413,11 @@ MonoBehaviour:
   jumpSpeed: 3
   lookSpeed: 5
   rotationSpeed: 10
-  mainPlayer: {fileID: 49444149}
-  doorSensorDistance: 2
-  UseUserInput: 0
-  SensorMask:
-    serializedVersion: 2
-    m_Bits: 0
-  FitnessUnchangedDie: 5
   fitness: 0
   checkpointsMet: 0
   allCharacters: {fileID: 0}
+  mainPlayer: {fileID: 49444149}
+  doorSensorDistance: 2
 --- !u!4 &536569402
 Transform:
   m_ObjectHideFlags: 0
@@ -1632,8 +1627,6 @@ GameObject:
   - component: {fileID: 587284775}
   - component: {fileID: 587284774}
   - component: {fileID: 587284773}
-  - component: {fileID: 587284776}
-  - component: {fileID: 587284777}
   m_Layer: 0
   m_Name: MultilevelController
   m_TagString: Untagged
@@ -1684,33 +1677,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &587284776
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 587284772}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44ebc2798916341259af561a66fba908, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  UseNodeMutation: 0
-  CarPrefab: {fileID: 1995489267}
-  GenerationNumberText: {fileID: 1711372614}
---- !u!114 &587284777
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 587284772}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d2164faf5430464d9238999ccffbdde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &676722005
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3075,16 +3041,11 @@ MonoBehaviour:
   jumpSpeed: 3
   lookSpeed: 5
   rotationSpeed: 10
-  mainPlayer: {fileID: 464899898}
-  doorSensorDistance: 2
-  UseUserInput: 0
-  SensorMask:
-    serializedVersion: 2
-    m_Bits: 512
-  FitnessUnchangedDie: 5
   fitness: 0
   checkpointsMet: 0
   allCharacters: {fileID: 0}
+  mainPlayer: {fileID: 464899898}
+  doorSensorDistance: 2
 --- !u!114 &1416726828
 MonoBehaviour:
   m_ObjectHideFlags: 0

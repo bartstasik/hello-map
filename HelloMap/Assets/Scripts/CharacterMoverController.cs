@@ -22,10 +22,6 @@ public class CharacterMoverController : MonoBehaviour
             case CharacterBehaviour.Type.NPC:
                 Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Door"));
                 break;
-            case CharacterBehaviour.Type.GA_NPC:
-                Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Door"));
-                Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("NPC"));
-                break;
             case CharacterBehaviour.Type.Player:
                 Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("NPC"));
                 break;
@@ -42,16 +38,6 @@ public class CharacterMoverController : MonoBehaviour
         if (other.collider.CompareTag("Environment"))
             _container.Grounded = true;
     }
-
-//    private void OnCollisionEnter(Collision collision) // Once anything hits the wall
-//    {
-//        if (_container.characterType == CharacterBehaviour.Type.GA_NPC
-//            && collision.gameObject.layer == LayerMask.NameToLayer("Environment")) // Make sure it's a car
-//        {
-//            var componentInParent = GetComponentInParent<CharacterBehaviour>();
-//            componentInParent.WallHit(); // If it is a car, tell it that it just hit a wall
-//        }
-//    }
 
     private void FixedUpdate()
     {

@@ -27,13 +27,6 @@ public class LevelSpawner : MonoBehaviour
         minimap = GameObject.FindGameObjectWithTag("Minimap")
                             ?.GetComponent<MinimapCameraController>();
         Cursor.visible = false;
-//        characters[0] = NewPair(checkpointController.checkpoints);
-
-//        for (int i = 1; i < population - 1; i++)
-//            characters[i] = Pair(checkpointController.checkpoints,
-//                                 playerPosition, playerRotation,
-//                                 npcPosition, npcRotation);
-//            characters[i] = NewPair(checkpointController.checkpoints);
     }
 
     public CharacterBehaviour MoveExistingPair(bool randomised = false)
@@ -72,23 +65,6 @@ public class LevelSpawner : MonoBehaviour
                                     Quaternion rotation2,
                                     bool newPair = true)
     {
-//        Transform player, npc;
-//        CharacterBehaviour playerBehaviour, npcBehaviour;
-//        CharacterMoverController playerMover, npcMover;
-//        Rigidbody playerRigidbody, npcRigidbody;
-//
-//        allCharacters.GetAll(out player,
-//                             out playerBehaviour,
-//                             out playerMover,
-//                             out playerRigidbody,
-//                             out npc,
-//                             out npcBehaviour,
-//                             out npcMover,
-//                             out npcRigidbody);
-
-//        if (allCharacters.playerBehaviour.characterType.Equals(CharacterBehaviour.Type.GA_NPC))
-//            allCharacters.playerBehaviour.allCheckpoints = checkpoints;
-
         allCharacters.playerBehaviour.allCheckpoints = checkpoints;
         allCharacters.npcBehaviour.allCheckpoints = checkpoints;
 

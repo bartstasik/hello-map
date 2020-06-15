@@ -54,7 +54,7 @@ public class MinimapCameraController : MonoBehaviour
 
         foreach (var character in characters)
         {
-//            if (character.Key.CompareTag("Player") || character.Key.CompareTag("GA_NPC"))
+//            if (character.Key.CompareTag("Player"))
 //                transform.position = character.Key.transform.position;
             character.Value.transform.position = character.Key.transform.position;
         }
