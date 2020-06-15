@@ -22,7 +22,6 @@ public class MultilevelController : MonoBehaviour
     public enum GamePlayMode
     {
         Normal,
-        GA,
         NN,
         NN_REC
     }
