@@ -192,14 +192,48 @@
           <e p="Documentation.txt" t="Include" />
         </e>
         <e p="Scripts" t="Include">
+          <e p="AllCharactersInfo.cs" t="Include" />
           <e p="CameraController.cs" t="Include" />
           <e p="CharacterBehaviour.cs" t="Include" />
           <e p="CharacterDummyController.cs" t="Include" />
           <e p="CharacterMoverController.cs" t="Include" />
           <e p="CheckpointController.cs" t="Include" />
+          <e p="CheckpointController2.cs" t="Include" />
+          <e p="DataContainer.cs" t="Include" />
+          <e p="DontDestroyTag.cs" t="Include" />
           <e p="DoorController.cs" t="Include" />
+          <e p="DoorRayController.cs" t="Include" />
+          <e p="GeneticAlgorithm.cs" t="Include" />
+          <e p="GlobalCharacter.cs" t="Include" />
+          <e p="IntroButtonController.cs" t="Include" />
+          <e p="KeyTextController.cs" t="Include" />
+          <e p="LevelController.cs" t="Include" />
+          <e p="LevelEndController.cs" t="Include" />
+          <e p="LevelSpawner.cs" t="Include" />
+          <e p="MinimapCameraController.cs" t="Include" />
+          <e p="MultilevelController.cs" t="Include" />
+          <e p="NeuralNet.cs" t="Include" />
+          <e p="PlayerKeyRayController.cs" t="Include" />
+          <e p="PlayerLoader.cs" t="Include" />
           <e p="PlayerMovementController.cs" t="Include" />
           <e p="RayController.cs" t="Include" />
+          <e p="Stolen" t="Include">
+            <e p="CameraFollow.cs" t="Include" />
+            <e p="Car.cs" t="Include" />
+            <e p="EvolutionManager.cs" t="Include" />
+            <e p="NeuralNetwork.cs" t="Include" />
+            <e p="StolenCheckpoint.cs" t="Include" />
+            <e p="Wall.cs" t="Include" />
+          </e>
+          <e p="WebSockets" t="Include">
+            <e p="NnMessage.cs" t="Include" />
+            <e p="WebSocket" t="Include">
+              <e p="WebSocket.cs" t="Include" />
+            </e>
+            <e p="WebSocketExample" t="Include">
+              <e p="Connection.cs" t="Include" />
+            </e>
+          </e>
         </e>
         <e p="Survival Character" t="Include">
           <e p="Scripts" t="Include">

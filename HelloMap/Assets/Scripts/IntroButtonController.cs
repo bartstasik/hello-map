@@ -9,6 +9,13 @@ public class IntroButtonController : MonoBehaviour
 {
     private Button _playButton;
 
+    public static void FirstBatchLevel()
+    {
+//        var scenePath = EditorBuildSettings.scenes[1];
+//        EditorSceneManager.OpenScene(scenePath.path);
+        SceneManager.LoadScene(SceneManager.sceneCount);
+    }
+    
     private void FirstLevel()
     {
         SceneManager.LoadScene(SceneManager.sceneCount);

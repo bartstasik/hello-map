@@ -9,6 +9,9 @@ TagManager:
   - Key
   - LevelCoordinates
   - Checkpoint
+  - Minimap
+  - GA_NPC
+  - NN_NPC
   layers:
   - Default
   - TransparentFX
@@ -27,8 +30,8 @@ TagManager:
   - Door
   - CharacterDot
   - LevelPortal
-  - 
-  - 
+  - GA_NPC
+  - NN_NPC
   - 
   - 
   - 

@@ -1,0 +1,27 @@
+﻿
+syntax = "proto3";
+package neuralnet;
+import "google/protobuf/timestamp.proto";
+
+message MovementInput {
+    double rotation = 1;
+    double northRay = 2;
+    double northwestRay = 3;
+    double northeastRay = 4;
+    double eastRay = 5;
+    double southRay = 6;
+    double westRay = 7;
+    bool doorClosed = 8;
+    int32 checkpointMet = 9;
+    double distanceFromPlayer = 10;
+    bool seesKey = 11;
+}
+
+message MovementOutput {
+    double mouseRotation = 1;
+    bool forwardButtonPressed = 2;
+    bool backButtonPressed = 3;
+    bool leftButtonPressed = 4;
+    bool rightButtonPressed = 5;
+    bool keyButtonPressed = 6;
+}
