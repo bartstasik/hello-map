@@ -1,117 +1,181 @@
-import tensorflow as tf
-import numpy as np
-import pandas as pd
 import os
 
-from tensorflow.python.keras import Sequential, Model
-from tensorflow.python.keras.layers import Dense, TimeDistributed, LSTM, GRU, SimpleRNN, Input, concatenate, Dropout, \
-    GaussianDropout
-from tensorflow.python.keras.activations import relu
-from tensorflow.python.keras.losses import SparseCategoricalCrossentropy
-from tensorflow.python.saved_model import builder
-
-DATASET_INPUTS = []
-DATASET_LABELS = []
-
-for i in range(5):
-    data = pd.read_csv("test-person-%s.csv" % i)
-    data = data[~data['rotation'].isin(['nan'])]
-    data = data[~data['distanceFromPlayer'].isin(['nan'])]
-    data = data.dropna(axis='columns')
-
-    data.replace(False, 0, inplace=True)
-    data.replace(True, 1, inplace=True)
-
-    inputs = data.filter(items=['rotation',
-                                'northRay',
-                                'northwestRay',
-                                'northeastRay',
-                                'eastRay',
-                                'southRay',
-                                'westRay',
-                                'doorClosed',
-                                'distanceFromPlayer',
-                                'seesKey']).values
-    labels = data.filter(items=['mouseRotation',
-                                'forwardButtonPressed',
-                                'backButtonPressed',
-                                'leftButtonPressed',
-                                'rightButtonPressed',
-                                'keyButtonPressed']).values
-
-    DATASET_INPUTS.append(inputs)
-    DATASET_LABELS.append(labels)
-
-# inputs = DATASET.filter(items=['timestamp',
-#                                'rotation',
-#                                'northRay',
-#                                'northwestRay',
-#                                'northeastRay',
-#                                'eastRay',
-#                                'southRay',
-#                                'westRay',
-#                                'fitness',
-#                                'doorClosed',
-#                                'checkpointMet',
-#                                'distanceFromPlayer',
-#                                'seesKey'])
+import numpy as np
+import pandas as pd
+import tensorflow_core.python.keras.backend as kb
+from matplotlib import pyplot
+from numpy import load, save, asarray
+from tensorflow_core.python.keras import Sequential, Model
+from tensorflow_core.python.keras.callbacks import EarlyStopping
+from tensorflow_core.python.keras.layers import Dense, SimpleRNN, Input, concatenate, \
+    GaussianDropout, CuDNNLSTM, GaussianNoise, Activation
 
 
-# inputs = DATASET.filter(items=['northRay',
-#                                'northwestRay',
-#                                'northeastRay',
-#                                'eastRay',
-#                                'southRay',
-#                                'westRay']).values
-# labels = DATASET.filter(items=['forwardButtonPressed',
-#                                'backButtonPressed',
-#                                'leftButtonPressed',
-#                                'rightButtonPressed']).values
-#
-
-inputs = []
-labels = []
-
-for i in range(5):
-    input_pad = np.zeros_like(DATASET_INPUTS[4])
-    label_pad = np.zeros_like(DATASET_LABELS[4])
-    input_pad[:DATASET_INPUTS[i].shape[0], :DATASET_INPUTS[i].shape[1]] = DATASET_INPUTS[i]
-    label_pad[:DATASET_LABELS[i].shape[0], :DATASET_LABELS[i].shape[1]] = DATASET_LABELS[i]
-
-    inputs.append(input_pad)
-    labels.append(label_pad)
-
-inputs = np.array(inputs)
-labels = np.array(labels)
-
-input_seq, input_timesteps, input_feat = inputs.shape
-label_seq, label_timesteps, label_feat = labels.shape
+def convert_function(n):
+    return n / 180 - 2 if n > 180 else n / 180
 
 
-def lstm(inputs, labels):
-    # inputs = inputs.reshape((1, input_timesteps, input_num))
-    # labels = labels.reshape((1, label_timesteps, label_num))
+def custom_loss(x0, x):
+    a = 1 - kb.tanh(x)
+    b = 1 + kb.tanh(x)
+    c_a = 1 - x0
+    c_b = 1 + x0
+    term_a = c_a * kb.log(a)
+    term_b = c_b * kb.log(b)
+    result = -0.5 * (term_a + term_b)
+    return result
 
-    model = Sequential()
 
-    # model.add(Dense(16, activation=relu, input_shape=(10,)))
-    model.add(LSTM(64, stateful=True, return_sequences=True, batch_input_shape=(
-        1, None, input_feat)))  # todo: variable timesteps, and save previous timesteps as progressing in-game
-    # model.add(SimpleRNN(128))
-    model.add(Dense(128, activation='relu'))
-    model.add(Dense(label_feat, activation='relu'))
+def create_data(directory="data_fixed_ray/"):
+    DATASET_INPUTS = []
+    DATASET_LABELS = []
+    count = 0
+    for root, dirs, files in os.walk(directory):
+        print(root)
+        for file in files:
+            if file.endswith(".csv") and file.startswith("output_"):
+                try:
+                    data = pd.read_csv(os.path.join(root, file))
+                    data = data[(~data['rotation'].isin(['nan']))]
+                    data['rotation'] = data['rotation'].apply(lambda x: convert_function(x))
+                    data = data[~data['northRay'].isin(['nan'])]
+                    data = data[~data['northwestRay'].isin(['nan'])]
+                    data = data[~data['northeastRay'].isin(['nan'])]
+                    data = data[~data['eastRay'].isin(['nan'])]
+                    data = data[~data['southRay'].isin(['nan'])]
+                    data = data[~data['westRay'].isin(['nan'])]
+                    data = data[~data['doorClosed'].isin(['nan'])]
+                    data = data[~data['checkpointMet'].isin(['nan'])]
+                    data = data[~data['distanceFromPlayer'].isin(['nan'])]
+                    data = data[~data['seesKey'].isin(['nan'])]
+                    data = data.dropna(axis='columns')
 
-    model.compile(optimizer='sgd',
-                  loss='mean_squared_error',
+                    data.replace(False, 0, inplace=True)
+                    data.replace(True, 1, inplace=True)
+
+                    inputs = data.filter(items=['rotation',
+                                                'northRay',
+                                                'northwestRay',
+                                                'northeastRay',
+                                                'eastRay',
+                                                'westRay',
+                                                'distanceFromPlayer']).values
+                    labels = data.filter(items=['mouseRotation',
+                                                'forwardButtonPressed']).values
+
+                    DATASET_INPUTS.append(inputs)
+                    DATASET_LABELS.append(labels)
+                    count += 1
+                except KeyError:
+                    print(os.path.join(root, file))
+    largest_data = 0
+    largest_data_index = 0
+
+    for i in range(len(DATASET_LABELS)):
+        if len(DATASET_LABELS[i]) > largest_data:
+            largest_data = len(DATASET_LABELS[i])
+            largest_data_index = i
+
+    inputs = []
+    labels = []
+
+    for i in range(len(DATASET_LABELS)):
+        input_pad = np.zeros_like(DATASET_INPUTS[largest_data_index])
+        label_pad = np.zeros_like(DATASET_LABELS[largest_data_index])
+        input_pad[:DATASET_INPUTS[i].shape[0], :DATASET_INPUTS[i].shape[1]] = DATASET_INPUTS[i]
+        label_pad[:DATASET_LABELS[i].shape[0], :DATASET_LABELS[i].shape[1]] = DATASET_LABELS[i]
+
+        inputs.append(input_pad)
+        labels.append(label_pad)
+
+    inputs = np.array(inputs)
+    labels = np.array(labels)
+
+    np.random.seed(69)
+    np.random.shuffle(inputs)
+    np.random.shuffle(labels)
+
+    save(os.path.join(directory, 'data-inputs-count-%s.npy' % count), asarray(inputs))
+    save(os.path.join(directory, 'data-labels-count-%s.npy' % count), asarray(labels))
+
+    return inputs, labels
+
+
+def load_data(directory="data_fixed_ray/", count="4126"):
+    return load(os.path.join(directory, 'data-inputs-count-%s.npy' % count)), \
+           load(os.path.join(directory, 'data-labels-count-%s.npy' % count))
+
+
+def lstm_functional(inputs, labels, patience):
+    input = Input(batch_input_shape=(256, None, input_feat))
+    layer_1 = CuDNNLSTM(6, stateful=True, return_sequences=True)(input)
+    layer_1 = GaussianNoise(0.5)(layer_1)
+    layer_1 = Activation('tanh')(layer_1)
+    layer_1 = GaussianDropout(0.2)(layer_1)
+    output_mouse = Dense(1, activation='tanh', name='mouse', )(layer_1)
+    output_w_key = Dense(1, activation='relu', name='w_key')(layer_1)
+
+    model = Model(inputs=input, outputs=[output_mouse, output_w_key])
+
+    losses = {
+        "mouse": custom_loss,
+        "w_key": "binary_crossentropy"
+    }
+
+    model.compile(optimizer='adam',
+                  loss=losses,
                   metrics=['accuracy'])
 
     model.summary()
 
-    model.fit(inputs, labels, epochs=250)
+    labels_ = labels[:, :, 0:1]
+    labels_1 = labels[:, :, 1:2]
+    history = model.fit(inputs[:], [labels_, labels_1], epochs=1000, shuffle=True,
+                        validation_split=0.25, verbose=1,
+                        callbacks=[EarlyStopping(monitor='val_loss',
+                                                 min_delta=0,
+                                                 patience=patience,
+                                                 verbose=0,
+                                                 mode='auto',
+                                                 baseline=0.89,
+                                                 restore_best_weights=True)])
 
-    model.save('deep with skip 73 percent.h5')
+    model.save('model.h5')
 
-    print()
+    pyplot.plot(history.history['mouse_loss'])
+    pyplot.plot(history.history['val_mouse_loss'])
+    pyplot.plot(history.history['w_key_loss'])
+    pyplot.plot(history.history['val_w_key_loss'])
+    pyplot.plot(history.history['loss'])
+    pyplot.plot(history.history['val_loss'])
+    pyplot.title('model train vs validation loss')
+    pyplot.ylabel('loss')
+    pyplot.xlabel('epoch')
+    pyplot.legend(['loss', 'mouse', 'w_key', 'val_loss', 'mouse_val', 'w_key_val'], loc='upper right')
+    pyplot.show()
+
+
+def rnn_func(inputs, labels):
+    input_0 = Input(batch_shape=(1, None, input_feat))
+    input_1 = SimpleRNN(128, stateful=True, return_sequences=True)(input_0)
+    input_1 = GaussianNoise(0.5)(input_1)
+    input_1 = Activation('tanh')(input_1)
+    input_1 = GaussianDropout(0.2)(input_1)
+    prediction_0 = Dense(1, activation='tanh', name='mouse')(input_1)
+    prediction_1 = Dense(label_feat - 1, activation='relu', name='w_key')(input_1)
+
+    output = concatenate([prediction_0, prediction_1])
+
+    model = Model(inputs=input_0, outputs=output)
+    model.compile(optimizer='sgd',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+
+    model.summary()
+
+    model.fit(inputs, labels, epochs=20)
+
+    model.save('model.h5')
 
 
 def dense(inputs, labels):
@@ -129,116 +193,16 @@ def dense(inputs, labels):
 
     model.fit(inputs, labels, epochs=10)
 
-    array = np.array([[0, 0, 0, 0, 0, 0]])
-    # array = array.reshape((1, 1, array.size))
-    a = model.predict(array)
-    print()
-
-
-def functional(inputs, labels):
-    # inputs = inputs.reshape((1, input_timesteps, input_num))
-    # labels = labels.reshape((1, label_timesteps, label_num))
-
-    input_0 = Input(batch_shape=(None, None, input_feat))
-    input_1 = LSTM(128, stateful=True, return_sequences=True)(input_0)
-    input_2 = Dense(64, activation='relu')(input_1)
-    input_2 = Dropout(rate=0.1)(input_2)
-    input_3 = Dense(32, activation='relu')(concatenate([input_1, input_2]))
-    input_3 = Dropout(rate=0.1)(input_3)
-    prediction = Dense(label_feat, activation='sigmoid')(concatenate([input_1, input_2, input_3]))
-
-    model = Model(inputs=input_0, outputs=prediction)
-    model.compile(optimizer='sgd',
-                  loss='mean_squared_error',
-                  metrics=['accuracy'])
-
-    model.summary()
-
-    model.fit(inputs, labels, epochs=250)
-
     model.save('model.h5')
 
-    print()
 
+inputs, labels = create_data()
+# inputs, labels = load_data()
 
-def functional2(inputs, labels):
-    # inputs = inputs.reshape((input_seq, input_timesteps, input_feat))
-    # labels = labels.reshape((input_seq, input_timesteps, input_feat))
+inputs = inputs[:4096, :, :]
+labels = labels[:4096, :, :]
 
-    input_0 = Input(batch_shape=(input_seq, None, input_feat))
-    input_1 = LSTM(128, stateful=True, return_sequences=True)(input_0)
-    input_2 = Dense(64, activation='relu')(input_1)
-    prediction = Dense(label_feat, activation='sigmoid')(concatenate([input_1, input_2]))
+input_seq, input_timesteps, input_feat = inputs.shape
+label_seq, label_timesteps, label_feat = labels.shape
 
-    model = Model(inputs=input_0, outputs=prediction)
-    model.compile(optimizer='sgd',
-                  loss='mean_squared_error',
-                  metrics=['accuracy'])
-
-    model.summary()
-
-    model.fit(inputs, labels, epochs=20, batch_size=5)
-
-    model.save('model.h5')
-
-    print()
-
-
-def functional(inputs, labels):
-    # inputs = inputs.reshape((1, input_timesteps, input_num))
-    # labels = labels.reshape((1, label_timesteps, label_num))
-
-    input_0 = Input(batch_shape=(input_seq, None, input_feat))
-    input_1 = LSTM(128, stateful=True, return_sequences=True)(input_0)
-    input_2 = Dense(64, activation='relu')(input_1)
-    input_2 = GaussianDropout(rate=0.1)(input_2)
-    input_3 = Dense(32, activation='relu')(concatenate([input_1, input_2]))
-    input_3 = Dropout(rate=0.1)(input_3)
-    prediction = Dense(label_feat, activation='sigmoid')(concatenate([input_1, input_2, input_3]))
-
-    model = Model(inputs=input_0, outputs=prediction)
-    model.compile(optimizer='sgd',
-                  loss='mean_squared_error',
-                  metrics=['accuracy'])
-
-    model.summary()
-
-    model.fit(inputs, labels, epochs=20, batch_size=5)  # , shuffle=True)
-
-    model.save('model.h5')
-
-    print()
-
-
-def non_stateful(inputs, labels):
-    input_0 = Input(shape=(None, input_feat))
-    input_1 = LSTM(3, stateful=False, return_sequences=True)(input_0)
-    input_2 = Dense(12, activation='relu')(input_1)
-    input_2 = GaussianDropout(rate=0.1)(input_2)
-    input_3 = Dense(32, activation='relu')(concatenate([input_1, input_2]))
-    input_3 = Dropout(rate=0.1)(input_3)
-    prediction = Dense(label_feat, activation='sigmoid')(concatenate([input_1, input_2, input_3]))
-
-    model = Model(inputs=input_0, outputs=prediction)
-    model.compile(optimizer='sgd',
-                  loss='mean_squared_error',
-                  metrics=['accuracy'])
-
-    model.summary()
-
-    model.fit(inputs, labels, epochs=250, batch_size=5)  # , shuffle=True)
-
-    model.save('model.h5')
-
-    print()
-
-# lstm(inputs, labels)
-non_stateful(inputs, labels)
-
-# inputs = inputs.reshape((1, input_timesteps, input_feat))
-model = tf.keras.models.load_model('model.h5')
-array = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=float)
-array = array.reshape((1, 1, input_feat))
-a = model.predict(array, batch_size=1)
-b = model.predict(inputs)
-print()
+lstm_functional(inputs, labels, 10)
